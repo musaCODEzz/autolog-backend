@@ -129,14 +129,17 @@ const vehicleSchema = new Schema<IVehicle>(
   }
 );
 
+// Pre-save hook: Auto-generate privacy-safe passportSlug (e.g. "mazda-cx5-7f9a2b")
 vehicleSchema.pre('save', async function () {
   if (this.passportSlug) {
     return;
   }
-  const cleanPlate = this.plateNumber.toLowerCase().replace(/\s+/g, '-');
-  const randomSuffix = Math.random().toString(36).substring(2, 6);
-  this.passportSlug = `${cleanPlate}-${randomSuffix}`;
+  // Uses make & model with random hash (Zero plate leakage in the URL!)
+  const cleanMake = this.make.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const cleanModel = this.model.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const randomSuffix = Math.random().toString(36).substring(2, 8); // 6-character random token
+  this.passportSlug = `${cleanMake}-${cleanModel}-${randomSuffix}`;
 });
-
+// 4. Model Export
 export const Vehicle: Model<IVehicle> = mongoose.model<IVehicle>('Vehicle', vehicleSchema);
 export default Vehicle;
