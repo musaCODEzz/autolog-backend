@@ -4,6 +4,7 @@ import { normalizeKenyanPlate } from '../utils/plate';
 export type TransmissionType = 'AUTOMATIC' | 'MANUAL';
 export type FuelType = 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
 export type VehicleStatus = 'active' | 'sold' | 'archived';
+export type MileageUnit = 'KM' | 'MILES';
 
 export interface IVehicle {
   owner: Types.ObjectId;
@@ -15,6 +16,7 @@ export interface IVehicle {
   transmission: TransmissionType;
   fuelType: FuelType;
   chassisNumber?: string;
+  mileageUnit: MileageUnit;
   initialMileage: number;
   currentMileage: number;
   estDailyKm: number;
@@ -86,6 +88,14 @@ const vehicleSchema = new Schema<IVehicle>(
       type: String,
       trim: true,
       uppercase: true,
+    },
+    mileageUnit: {
+      type: String,
+      enum: {
+        values: ['KM', 'MILES'],
+        message: '{VALUE} is not a supported mileage unit',
+      },
+      default: 'KM',
     },
     initialMileage: {
       type: Number,
