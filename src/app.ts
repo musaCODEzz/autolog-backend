@@ -5,7 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
-
+import authRoutes from './routes/auth.routes';
 
 const app: Express = express();
 
@@ -53,6 +53,9 @@ app.get('/health', (_req: Request, res: Response) => {
         timestamp: new Date().toISOString(),
     });
 });
+
+// API Routes
+app.use('/api/v1/auth', authRoutes);
 
 //404 route handler
 app.use((_req: Request, res: Response) => {
