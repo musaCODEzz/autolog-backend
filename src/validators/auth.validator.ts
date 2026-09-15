@@ -59,14 +59,42 @@ export const registerSchema = z.object({
             'Password must contain at least one letter and one number'
         ),
     role: registerRoleEnum.default('owner'),
-    // Optional business details for dealers or garages
+    // Registration only permits businessName and location (NO RATING, NO isVerifiedPartner)
     businessDetails: z
         .object({
             businessName: z.string().trim().min(2).optional(),
             location: z.string().trim().min(2).optional(),
         })
         .optional(),
-});
+})
+    .superRefine((data, ctx) => {
+        // If user is registering as a Dealer or Garage, businessName & location are MANDATORY!
+        if (data.role === 'dealer' || data.role === 'garage') {
+            if (!data.businessDetails?.businessName || data.businessDetails.businessName.length < 2) {
+                ctx.addIssue({
+                    code: 'custom',
+                    path: ['businessDetails', 'businessName'],
+                    message: `${data.role === 'garage' ? 'Garage' : 'Dealership'} name is required (minimum 2 characters)`,
+                });
+            }
+            if (!data.businessDetails?.location || data.businessDetails.location.length < 2) {
+                ctx.addIssue({
+                    code: 'custom',
+                    path: ['businessDetails', 'location'],
+                    message: 'Physical location/town is required (e.g. Industrial Area, Ngara, Mombasa)',
+                });
+            }
+        }
+
+        // If user is registering as a Car Owner, businessDetails must NOT be provided
+        if (data.role === 'owner' && data.businessDetails && (data.businessDetails.businessName || data.businessDetails.location)) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['businessDetails'],
+                message: "Car owners cannot have business details. Please change role to 'garage' or 'dealer', or remove businessDetails.",
+            });
+        }
+    });
 /**
  * Login validation schema
  * Supports both email OR Kenyan phone number

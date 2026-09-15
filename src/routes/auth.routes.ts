@@ -26,30 +26,56 @@ const router = Router();
  *             properties:
  *               name:
  *                 type: string
- *                 example: Musa Kibet
  *               email:
  *                 type: string
- *                 example: musa@autolog.co.ke
  *               phone:
  *                 type: string
- *                 example: "0712345678"
  *                 description: Any valid Kenyan format (07..., 01..., +254...)
  *               password:
  *                 type: string
- *                 example: Secret123
  *               role:
  *                 type: string
  *                 enum: [owner, dealer, garage]
  *                 default: owner
  *               businessDetails:
  *                 type: object
+ *                 description: Mandatory for 'dealer' or 'garage'. Must be omitted for 'owner'.
  *                 properties:
  *                   businessName:
  *                     type: string
- *                     example: Nairobi Motor Garage
  *                   location:
  *                     type: string
- *                     example: Industrial Area, Nairobi
+ *           examples:
+ *             CarOwner:
+ *               summary: Car Owner (Private Individual)
+ *               value:
+ *                 name: Musa Kibet
+ *                 email: musa@autolog.co.ke
+ *                 phone: "0712345678"
+ *                 password: SecretPassword123
+ *                 role: owner
+ *             Garage:
+ *               summary: Garage / Mechanic Workshop (Commercial)
+ *               value:
+ *                 name: Kamau Mechanic
+ *                 email: kamau@garage.co.ke
+ *                 phone: "0722112233"
+ *                 password: SecretPassword123
+ *                 role: garage
+ *                 businessDetails:
+ *                   businessName: Nairobi Motor Care
+ *                   location: Industrial Area, Nairobi
+ *             Dealer:
+ *               summary: Spare Parts Dealer (Commercial)
+ *               value:
+ *                 name: Hassan Spares
+ *                 email: hassan@parts.co.ke
+ *                 phone: "0733445566"
+ *                 password: SecretPassword123
+ *                 role: dealer
+ *                 businessDetails:
+ *                   businessName: Kirinyaga Auto Spares
+ *                   location: Kirinyaga Road, Nairobi
  *     responses:
  *       201:
  *         description: Account created successfully

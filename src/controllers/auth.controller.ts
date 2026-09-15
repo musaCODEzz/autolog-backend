@@ -36,6 +36,8 @@ export const register = async (
             });
             return;
         }
+        const isBusiness = role === 'dealer' || role === 'garage';
+
         // 3. Create new user
         const user = await User.create({
             name,
@@ -43,7 +45,15 @@ export const register = async (
             phone: formattedPhone,
             password,
             role: role || 'owner',
-            businessDetails: role === 'dealer' || role === 'garage' ? businessDetails : undefined,
+            businessDetails: isBusiness && businessDetails
+                ? {
+                    businessName: businessDetails.businessName,
+                    location: businessDetails.location,
+                    isVerifiedPartner: false,
+                    rating: 5.0,
+                    totalReviews: 0,
+                }
+                : undefined,
         });
         // 4. Generate JWT token
         const token = generateToken({

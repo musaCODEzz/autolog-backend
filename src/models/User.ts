@@ -29,6 +29,17 @@ export interface IUser extends Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
+const businessDetailsSchema = new Schema<IBusinessDetails>(
+  {
+    businessName: { type: String, trim: true },
+    location: { type: String, trim: true },
+    isVerifiedPartner: { type: Boolean, default: false },
+    rating: { type: Number, default: 5.0, min: 1.0, max: 5.0 },
+    totalReviews: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const userSchema = new Schema<IUser>(
   {
     name: {
@@ -74,11 +85,8 @@ const userSchema = new Schema<IUser>(
       default: 'owner',
     },
     businessDetails: {
-      businessName: { type: String, trim: true },
-      location: { type: String, trim: true },
-      isVerifiedPartner: { type: Boolean, default: false },
-      rating: { type: Number, default: 5.0, min: 1.0, max: 5.0 },
-      totalReviews: { type: Number, default: 0 },
+      type: businessDetailsSchema,
+      default: undefined,
     },
     isSuspended: {
       type: Boolean,
@@ -101,14 +109,17 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-// Pre-save hook: Hashes password before saving if modified
+// Pre-save hook: Strips businessDetails for owners, and hashes password
 userSchema.pre<IUser>('save', async function () {
+  if (this.role === 'owner') {
+    this.businessDetails = undefined;
+  }
+
   if (!this.isModified('password') || !this.password) {
     return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-
 });
 // Instance Method: Safely verifies candidate password against stored bcrypt hash
 userSchema.methods.comparePassword = async function (
