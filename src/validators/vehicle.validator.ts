@@ -98,7 +98,7 @@ export const createVehicleSchema = z
             .min(1, 'Estimated daily km must be at least 1')
             .max(1000, 'Estimated daily km cannot exceed 1000')
             .default(35),
-        photos: z.array(z.string().url('Photo must be a valid URL')).default([]),
+        photos: z.array(z.url({ message: 'Photo must be a valid URL' })).default([]),
     })
     .refine((data) => data.currentMileage >= data.initialMileage, {
         message: 'Current mileage cannot be lower than initial mileage',
@@ -131,7 +131,7 @@ export const updateVehicleSchema = z.object({
     chassisNumber: z.string().trim().toUpperCase().min(6).max(25).optional(),
     estDailyKm: z.number().min(1).max(1000).optional(),
     status: vehicleStatusEnum.optional(),
-    photos: z.array(z.string().url()).optional(),
+    photos: z.array(z.url({ message: 'Photo must be a valid URL' })).optional(),
 });
 // TypeScript type inference
 export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;

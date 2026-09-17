@@ -6,6 +6,8 @@ import morgan from "morgan";
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 import authRoutes from './routes/auth.routes';
+import vehicleRoutes from './routes/vehicle.routes';
+
 
 const app: Express = express();
 
@@ -56,6 +58,7 @@ app.get('/health', (_req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/vehicles', vehicleRoutes);
 
 //404 route handler
 app.use((_req: Request, res: Response) => {
