@@ -170,8 +170,16 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `POST` | `/api/v1/vehicles` | Register a new vehicle to digital passport | Authenticated (Owner) |
 | `GET` | `/api/v1/vehicles` | List all vehicles owned by logged-in user | Authenticated (Owner) |
 | `GET` | `/api/v1/vehicles/:id` | Get vehicle details by ID (Owner isolation) | Authenticated (Owner) |
+| `PATCH` | `/api/v1/vehicles/:id` | Update vehicle profile specs/photos | Authenticated (Owner) |
 | `PATCH` | `/api/v1/vehicles/:id/mileage` | Update odometer (Rollback prevention) | Authenticated (Owner) |
 | `GET` | `/api/v1/vehicles/passport/:slug` | Public sanitized passport with masked plate | **Public** |
+
+### Service History & Verification Engine (`/api/v1/services`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/services` | Log service record (Auto-assigned Trust Tier 1/2/3, auto-advances odometer) | Authenticated (Owner / Garage) |
+| `GET` | `/api/v1/services/vehicle/:vehicleId` | Fetch chronological service history for a vehicle | Authenticated |
+| `GET` | `/api/v1/services/:id` | Fetch detailed service record by ID with parts and garage info | Authenticated |
 
 ---
 
