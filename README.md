@@ -55,6 +55,10 @@ Our backend is engineered specifically to prevent exploits in the Nairobi automo
 | **Credential Harvesting** | Scrapers probing phone numbers to discover registered Kenyan accounts. | `auth.controller.ts` returns the identical generic message `"Invalid credentials"` (401) on both missing accounts and incorrect passwords. |
 | **Kenyan Phone Normalization** | Mixed phone number inputs (`0712...`, `011...`, `254...`). | `formatKenyanPhone` converts every input to standard international E.164 (`+254XXXXXXXXX`) before saving or querying. |
 | **Odometer Rollback Prevention** | Sellers attempting to lower mileage before listing a car for sale. | Mileage updates strictly validate: `newMileage >= currentMileage`. Rollback attempts are blocked with `400 Bad Request`. |
+| **Automatic Odometer Progression** | Discrepancies between service logs and vehicle dashboard. | Logging a service at `mileageAtService > currentMileage` automatically advances the vehicle's odometer reading. |
+| **Retroactive Service Stamp Fraud** | Sellers faking historical service records right before a sale. | Pre-save hook detects if `serviceDate < today - 30 days` and flags `isBackdated: true` permanently in the audit trail. |
+| **3-Tier Verification Engine** | Unverified claims of OEM dealer servicing. | Auto-assigns `TIER_1_SELF` (self-log), `TIER_2_DOCUMENTED` (with Cloudinary receipt), or `TIER_3_PARTNER` (verified partner garage). |
+| **Privacy Shield on Public Passports** | Plate cloning and stalker risks on sales portals. | Public passports mask plates (`KD* ***X`), truncate VIN/chassis (`...3842`), and strip all owner identity fields. |
 
 ---
 
@@ -71,7 +75,8 @@ autolog-backend/
 │   │
 │   ├── controllers/        # Business logic & response formatters
 │   │   ├── auth.controller.ts     # Register, dual-mode login, getMe
-│   │   └── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
+│   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
+│   │   └── service.controller.ts  # 3-Tier service logging & history lookup
 │   │
 │   ├── middlewares/        # Express HTTP interceptors & gatekeepers
 │   │   ├── auth.middleware.ts     # JWT verify, suspension guard & RBAC authorize
@@ -86,7 +91,13 @@ autolog-backend/
 │   │
 │   ├── routes/             # Express routers with Swagger JSDoc documentation
 │   │   ├── auth.routes.ts  # /api/v1/auth routes
-│   │   └── vehicle.routes.ts # /api/v1/vehicles routes
+│   │   ├── vehicle.routes.ts # /api/v1/vehicles routes
+│   │   └── service.routes.ts # /api/v1/services routes
+│   │
+│   ├── validators/         # Strict Zod schemas with Kenyan formatting rules
+│   │   ├── auth.validator.ts      # Phone, email, password & role refinements
+│   │   ├── vehicle.validator.ts   # NTSA plates, specs, photo URLs
+│   │   └── service.validator.ts   # Categories, dates, costs, receipts
 │   │
 │   ├── utils/              # Pure helper functions (independent of Express)
 │   │   ├── jwt.ts          # Cryptographic token generator & verifier
@@ -180,6 +191,21 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `POST` | `/api/v1/services` | Log service record (Auto-assigned Trust Tier 1/2/3, auto-advances odometer) | Authenticated (Owner / Garage) |
 | `GET` | `/api/v1/services/vehicle/:vehicleId` | Fetch chronological service history for a vehicle | Authenticated |
 | `GET` | `/api/v1/services/:id` | Fetch detailed service record by ID with parts and garage info | Authenticated |
+
+---
+
+## 🗺️ Project Milestones & Implementation Status
+
+- [x] **Milestone 1: Tooling & Setup** — TypeScript 5, Express 5, Morgan, Helmet, CORS, strict typing, Git repository.
+- [x] **Milestone 2: Domain Modeling & Documentation** — PRD with Kenyan automotive context & 12 anti-tamper defenses.
+- [x] **Milestone 3: Database Models** — Mongoose models & TS interfaces (`User`, `Vehicle`, `ServiceRecord`, `PartRequest`, `PartQuote`).
+- [x] **Milestone 4: Resilient Database Layer** — MongoDB Atlas auto-reconnect, compound indexes, and connection lifecycle.
+- [x] **Milestone 5: Production Server & Documentation** — Express bootstrap, custom global error handler, and OpenAPI 3.0 Swagger UI.
+- [x] **Milestone 6: Authentication & Authorization Engine** — JWT, bcrypt, dual-mode login (email/Kenyan phone), E.164 phone normalizer, RBAC middleware.
+- [x] **Milestone 7: Vehicle Passport Module** — NTSA plate regex, anti-rollback odometer defense, SEO slug generator, and privacy-shielded public passport.
+- [x] **Milestone 8: Service Records & 3-Tier Verification Engine** — Tier 1 (Self), Tier 2 (Documented with Receipt), Tier 3 (Partner Verified), auto-odometer sync, backdating detector (>30 days), and trust score computation.
+- [ ] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
+- [ ] **Milestone 10: SMS & Alert Infrastructure** — Africa's Talking integration for service micro-checkins and quote alerts.
 
 ---
 
