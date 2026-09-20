@@ -59,6 +59,9 @@ Our backend is engineered specifically to prevent exploits in the Nairobi automo
 | **Retroactive Service Stamp Fraud** | Sellers faking historical service records right before a sale. | Pre-save hook detects if `serviceDate < today - 30 days` and flags `isBackdated: true` permanently in the audit trail. |
 | **3-Tier Verification Engine** | Unverified claims of OEM dealer servicing. | Auto-assigns `TIER_1_SELF` (self-log), `TIER_2_DOCUMENTED` (with Cloudinary receipt), or `TIER_3_PARTNER` (verified partner garage). |
 | **Privacy Shield on Public Passports** | Plate cloning and stalker risks on sales portals. | Public passports mask plates (`KD* ***X`), truncate VIN/chassis (`...3842`), and strip all owner identity fields. |
+| **Kirinyaga Rd Broker Elimination** | Street middlemen ("Kamagera") marking up parts 30-50% with knockoffs. | Connects owners and garages directly to vetted parts shops with verified physical location and shelf stock photos. |
+| **"Bei Ilipanda Asubuhi" Bait & Switch** | Dealers quoting cheap on phone and hiking prices upon customer arrival. | Mandatory 48-Hour Price Lock Guarantee (`validUntil = now + 48h`) locked contractually upon quote submission. |
+| **Anti-Cartel Blind Bidding** | Competing spare parts dealers forming cartels to fix prices. | Dealers can only inspect vehicle fitment specs and their own submitted bid. Competing dealer quotes are strictly hidden. |
 
 ---
 
@@ -76,7 +79,8 @@ autolog-backend/
 │   ├── controllers/        # Business logic & response formatters
 │   │   ├── auth.controller.ts     # Register, dual-mode login, getMe
 │   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
-│   │   └── service.controller.ts  # 3-Tier service logging & history lookup
+│   │   ├── service.controller.ts  # 3-Tier service logging & history lookup
+│   │   └── rfq.controller.ts      # RFQs, blind bidding & 48h price lock quotes
 │   │
 │   ├── middlewares/        # Express HTTP interceptors & gatekeepers
 │   │   ├── auth.middleware.ts     # JWT verify, suspension guard & RBAC authorize
@@ -92,12 +96,14 @@ autolog-backend/
 │   ├── routes/             # Express routers with Swagger JSDoc documentation
 │   │   ├── auth.routes.ts  # /api/v1/auth routes
 │   │   ├── vehicle.routes.ts # /api/v1/vehicles routes
-│   │   └── service.routes.ts # /api/v1/services routes
+│   │   ├── service.routes.ts # /api/v1/services routes
+│   │   └── rfq.routes.ts   # /api/v1/rfq routes
 │   │
 │   ├── validators/         # Strict Zod schemas with Kenyan formatting rules
 │   │   ├── auth.validator.ts      # Phone, email, password & role refinements
 │   │   ├── vehicle.validator.ts   # NTSA plates, specs, photo URLs
-│   │   └── service.validator.ts   # Categories, dates, costs, receipts
+│   │   ├── service.validator.ts   # Categories, dates, costs, receipts
+│   │   └── rfq.validator.ts       # Part requests, categories, 48h quotes
 │   │
 │   ├── utils/              # Pure helper functions (independent of Express)
 │   │   ├── jwt.ts          # Cryptographic token generator & verifier
@@ -192,6 +198,18 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `GET` | `/api/v1/services/vehicle/:vehicleId` | Fetch chronological service history for a vehicle | Authenticated |
 | `GET` | `/api/v1/services/:id` | Fetch detailed service record by ID with parts and garage info | Authenticated |
 
+### Spare Parts RFQ & 48-Hour Price Lock Engine (`/api/v1/rfq`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/rfq/requests` | Create part request linked to vehicle (Fitment auto-extracted) | Authenticated (Owner / Garage) |
+| `GET` | `/api/v1/rfq/requests/my` | List all RFQs created by logged-in user with quote counts | Authenticated (Owner / Garage) |
+| `GET` | `/api/v1/rfq/requests/:id` | View RFQ (Requesters see all ranked quotes; Dealers see blind specs) | Authenticated |
+| `PATCH` | `/api/v1/rfq/requests/:id/cancel` | Cancel an open RFQ and auto-expire active bids | Authenticated (Requester) |
+| `GET` | `/api/v1/rfq/feed` | Dealer Feed: Open RFQs filtered by category and urgency | Authenticated (Dealer / Admin) |
+| `POST` | `/api/v1/rfq/quotes` | Submit quotation with mandatory 48-hour price lock guarantee | Authenticated (Dealer) |
+| `GET` | `/api/v1/rfq/quotes/my` | Dealer view of their submitted quotations & lock timers | Authenticated (Dealer) |
+| `PATCH` | `/api/v1/rfq/quotes/:id/accept` | Accept winning quote (Locks deal & atomically auto-rejects competitors) | Authenticated (Requester) |
+
 ---
 
 ## 🗺️ Project Milestones & Implementation Status
@@ -204,7 +222,7 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 6: Authentication & Authorization Engine** — JWT, bcrypt, dual-mode login (email/Kenyan phone), E.164 phone normalizer, RBAC middleware.
 - [x] **Milestone 7: Vehicle Passport Module** — NTSA plate regex, anti-rollback odometer defense, SEO slug generator, and privacy-shielded public passport.
 - [x] **Milestone 8: Service Records & 3-Tier Verification Engine** — Tier 1 (Self), Tier 2 (Documented with Receipt), Tier 3 (Partner Verified), auto-odometer sync, backdating detector (>30 days), and trust score computation.
-- [ ] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
+- [x] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
 - [ ] **Milestone 10: SMS & Alert Infrastructure** — Africa's Talking integration for service micro-checkins and quote alerts.
 
 ---
