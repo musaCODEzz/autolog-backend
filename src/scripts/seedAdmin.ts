@@ -16,26 +16,41 @@ const seedAdmin = async () => {
     await mongoose.connect(mongoUri);
     console.log('✅ Connected to MongoDB Atlas');
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@autolog.co.ke';
-    const adminPhone = formatKenyanPhone(process.env.ADMIN_PHONE || '+254700000001');
-    const adminPassword = process.env.ADMIN_PASSWORD || 'SuperAdmin2026!';
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPhoneRaw = process.env.ADMIN_PHONE;
+    const adminPassword = process.env.ADMIN_PASSWORD;
 
-    // Check if admin already exists
+    if (!adminEmail || !adminPhoneRaw || !adminPassword) {
+      console.error('❌ SECURITY ERROR: ADMIN_EMAIL, ADMIN_PHONE, and ADMIN_PASSWORD must all be defined in your .env file!');
+      console.error('   Please add them to your .env:');
+      console.error('   ADMIN_EMAIL=your_admin@autolog.co.ke');
+      console.error('   ADMIN_PHONE=+2547XXXXXXXX');
+      console.error('   ADMIN_PASSWORD=your_strong_password');
+      await mongoose.disconnect();
+      process.exit(1);
+    }
+
+    const adminPhone = formatKenyanPhone(adminPhoneRaw);
+
+    // Check if THIS specific admin already exists by email or phone
     const existingAdmin = await User.findOne({
-      $or: [{ email: adminEmail.toLowerCase() }, { role: 'admin' }],
+      $or: [{ email: adminEmail.toLowerCase() }, { phone: adminPhone }],
     });
 
     if (existingAdmin) {
       existingAdmin.password = adminPassword;
+      if (existingAdmin.role !== 'admin') {
+        existingAdmin.role = 'admin'; // Promote to admin if needed
+      }
       await existingAdmin.save();
-      console.log(`✅ Admin password updated/synced for: ${existingAdmin.email}`);
+      console.log(`✅ Admin account updated & synced for: ${existingAdmin.email} (Role: ${existingAdmin.role})`);
       await mongoose.disconnect();
       return;
     }
 
-    // Create the Super Admin (Mongoose pre-save hook will hash password once)
+    // Create the Admin account (Mongoose pre-save hook will hash password once)
     const admin = await User.create({
-      name: 'AutoLog Super Admin',
+      name: process.env.ADMIN_NAME || 'AutoLog Administrator',
       email: adminEmail.toLowerCase(),
       phone: adminPhone,
       password: adminPassword,
