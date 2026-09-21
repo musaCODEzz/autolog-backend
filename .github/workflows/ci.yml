@@ -1,0 +1,75 @@
+name: AutoLog Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================================
+  # Job 1: Test & Quality Gate (Typecheck, Vitest 40-test suite, Build)
+  # =========================================================================
+  test:
+    name: Typecheck, Test & Build (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Static Type Check (tsc)
+        run: npx tsc --noEmit
+
+      - name: Run Vitest In-Memory Automated Test Suites (40 tests)
+        run: npm test
+        env:
+          NODE_ENV: test
+          PORT: 5002
+          JWT_SECRET: ci_test_jwt_secret_token_1234567890
+          JWT_EXPIRES_IN: 7d
+
+      - name: Verify Production TypeScript Build
+        run: npm run build
+
+  # =========================================================================
+  # Job 2: Docker Container Build Verification
+  # Ensures Dockerfile and multi-stage container build succeed without errors
+  # =========================================================================
+  docker:
+    name: Docker Container Build Check
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image (Dry Run Check)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: autolog-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

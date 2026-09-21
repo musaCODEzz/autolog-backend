@@ -1,0 +1,73 @@
+services:
+  # -----------------------------------------------------------
+  # AutoLog KE API Service
+  # -----------------------------------------------------------
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autolog-api
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - MONGODB_URI=mongodb://mongo:27017/autolog
+      - JWT_SECRET=autolog_production_super_jwt_secret_devops_docker_2026
+      - JWT_EXPIRES_IN=7d
+      - CLIENT_URL=http://localhost:3000
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - autolog-network
+
+  # -----------------------------------------------------------
+  # Primary MongoDB Database
+  # -----------------------------------------------------------
+  mongo:
+    image: mongo:7.0
+    container_name: autolog-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - autolog-network
+
+  # -----------------------------------------------------------
+  # Mongo Express - Lightweight Database Admin Web GUI
+  # Accessible at: http://localhost:8081
+  # -----------------------------------------------------------
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: autolog-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=autologpass
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - autolog-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  autolog-network:
+    driver: bridge

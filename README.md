@@ -6,6 +6,9 @@
 [![Node.js](https://img.shields.io/badge/Node.js-v22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-5.x-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Vitest](https://img.shields.io/badge/Tested_with-Vitest-yellow?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![CI Pipeline](https://github.com/musaCODEzz/autolog-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/musaCODEzz/autolog-backend/actions/workflows/ci.yml)
 [![Zod](https://img.shields.io/badge/Validation-Zod_v4-3E67B1?style=for-the-badge&logo=zod&logoColor=white)](https://zod.dev/)
 [![Swagger](https://img.shields.io/badge/API_Docs-OpenAPI_3.0-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:5001/api-docs)
 
@@ -226,6 +229,8 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 
 ---
 
+---
+
 ## 🗺️ Project Milestones & Implementation Status
 
 - [x] **Milestone 1: Tooling & Setup** — TypeScript 5, Express 5, Morgan, Helmet, CORS, strict typing, Git repository.
@@ -237,11 +242,79 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 7: Vehicle Passport Module** — NTSA plate regex, anti-rollback odometer defense, SEO slug generator, and privacy-shielded public passport.
 - [x] **Milestone 8: Service Records & 3-Tier Verification Engine** — Tier 1 (Self), Tier 2 (Documented with Receipt), Tier 3 (Partner Verified), auto-odometer sync, backdating detector (>30 days), and trust score computation.
 - [x] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
-- [ ] **Milestone 10: SMS & Alert Infrastructure** — Africa's Talking integration for service micro-checkins and quote alerts.
+- [x] **Milestone 10: Admin Operations & Platform Moderation** — Garage verification, instant account suspension/ban, and platform metrics.
+- [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
+- [ ] **Milestone 12: SMS & Alert Infrastructure** — Africa's Talking integration for service micro-checkins and quote alerts.
 
 ---
 
-## 🧪 Build & Verification Commands
+## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
+
+AutoLog KE features a comprehensive 40-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~15s), and complete offline testability.
+
+```bash
+# Run full automated test suite once
+npm test
+
+# Run tests in interactive watch mode (re-runs on file changes)
+npm run test:watch
+```
+
+### Test Coverage Summary (40/40 Tests Passing)
+| Test Suite | File | Tests | Key Scenarios Covered |
+| :--- | :--- | :--- | :--- |
+| **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
+| **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual-mode login, commercial isolation, Zod error mapping |
+| **Vehicle Passport** | `tests/vehicle.test.ts` | 6 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport |
+| **Service Engine** | `tests/service.test.ts` | 5 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag |
+| **RFQ Engine** | `tests/rfq.test.ts` | 8 | Part request creation, blind dealer feed, 48h price lock, duplicate quote prevention, winning quote acceptance |
+| **Admin Operations**| `tests/admin.test.ts` | 8 | Platform metrics, RBAC unauthorized/forbidden blocks, garage partner verification, user suspension/ban |
+
+---
+
+## 🐳 Docker & Containerization
+
+The backend includes a production-grade multi-stage Docker setup with an Alpine base and dedicated non-root user (`autolog:nodejs`) for maximum security and minimal image size (~180MB).
+
+### Quick Start with Docker Compose
+
+Spin up the entire AutoLog KE stack (API + MongoDB + Mongo Express GUI) with a single command:
+
+```bash
+# Start all containers in detached mode
+docker compose up --build -d
+
+# View real-time logs
+docker compose logs -f api
+
+# Stop all containers
+docker compose down
+```
+
+### Container Services & Endpoints
+| Container | Service | Port | Description |
+| :--- | :--- | :--- | :--- |
+| `autolog-api` | Express API | `http://localhost:5001` | Core REST API and OpenAPI Swagger docs |
+| `autolog-mongo` | MongoDB 7.0 | `localhost:27017` | Persistent database container with named volume |
+| `autolog-mongo-express` | Mongo Express | `http://localhost:8081` | Web database management GUI (admin / autologpass) |
+
+---
+
+## 🚀 CI/CD Pipeline (GitHub Actions)
+
+Every pull request and push to the `main` branch automatically triggers our continuous integration workflow (`.github/workflows/ci.yml`):
+
+1. **Matrix Quality Gate (Node 20.x & 22.x):**
+   - Clean install (`npm ci`)
+   - Static type-checking (`npx tsc --noEmit`)
+   - Automated test suite execution (`npm test` — 40 in-memory tests)
+   - Production TypeScript compilation (`npm run build`)
+2. **Docker Build Gate:**
+   - Multi-stage Docker container build verification (`docker build`) to guarantee deployment artifacts never break.
+
+---
+
+## 🛠️ Build & Verification Commands
 
 ```bash
 # Type-check entire project without emitting JavaScript
@@ -250,8 +323,11 @@ npx tsc --noEmit
 # Compile TypeScript to production bundle in dist/
 npm run build
 
-# Run production server
+# Run production server from compiled dist/
 npm start
+
+# Seed initial system administrator from .env credentials
+npm run seed:admin
 ```
 
 ---

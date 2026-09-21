@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.env.local
+.git
+.gitignore
+.github
+coverage
+tests
+vitest.config.mts
+*.log
+npm-debug.log*
+.DS_Store
+.agents
