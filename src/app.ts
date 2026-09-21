@@ -9,6 +9,8 @@ import authRoutes from './routes/auth.routes';
 import vehicleRoutes from './routes/vehicle.routes';
 import serviceRoutes from './routes/service.routes';
 import rfqRoutes from './routes/rfq.routes';
+import adminRoutes from './routes/admin.routes';
+
 
 
 const app: Express = express();
@@ -63,6 +65,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/vehicles', vehicleRoutes);
 app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/rfq', rfqRoutes);
+app.use('/api/v1/admin', adminRoutes)
 
 //404 route handler
 app.use((_req: Request, res: Response) => {

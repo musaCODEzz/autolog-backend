@@ -80,7 +80,8 @@ autolog-backend/
 │   │   ├── auth.controller.ts     # Register, dual-mode login, getMe
 │   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
 │   │   ├── service.controller.ts  # 3-Tier service logging & history lookup
-│   │   └── rfq.controller.ts      # RFQs, blind bidding & 48h price lock quotes
+│   │   ├── rfq.controller.ts      # RFQs, blind bidding & 48h price lock quotes
+│   │   └── admin.controller.ts    # Accreditation, moderation & platform analytics
 │   │
 │   ├── middlewares/        # Express HTTP interceptors & gatekeepers
 │   │   ├── auth.middleware.ts     # JWT verify, suspension guard & RBAC authorize
@@ -97,13 +98,18 @@ autolog-backend/
 │   │   ├── auth.routes.ts  # /api/v1/auth routes
 │   │   ├── vehicle.routes.ts # /api/v1/vehicles routes
 │   │   ├── service.routes.ts # /api/v1/services routes
-│   │   └── rfq.routes.ts   # /api/v1/rfq routes
+│   │   ├── rfq.routes.ts   # /api/v1/rfq routes
+│   │   └── admin.routes.ts # /api/v1/admin routes (RBAC Admin-only)
 │   │
 │   ├── validators/         # Strict Zod schemas with Kenyan formatting rules
 │   │   ├── auth.validator.ts      # Phone, email, password & role refinements
 │   │   ├── vehicle.validator.ts   # NTSA plates, specs, photo URLs
 │   │   ├── service.validator.ts   # Categories, dates, costs, receipts
-│   │   └── rfq.validator.ts       # Part requests, categories, 48h quotes
+│   │   ├── rfq.validator.ts       # Part requests, categories, 48h quotes
+│   │   └── admin.validator.ts     # Partner verification & suspension schemas
+│   │
+│   ├── scripts/            # CLI seeding & management scripts
+│   │   └── seedAdmin.ts    # Secure Super Admin provisioning script
 │   │
 │   ├── utils/              # Pure helper functions (independent of Express)
 │   │   ├── jwt.ts          # Cryptographic token generator & verifier
@@ -209,6 +215,14 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `POST` | `/api/v1/rfq/quotes` | Submit quotation with mandatory 48-hour price lock guarantee | Authenticated (Dealer) |
 | `GET` | `/api/v1/rfq/quotes/my` | Dealer view of their submitted quotations & lock timers | Authenticated (Dealer) |
 | `PATCH` | `/api/v1/rfq/quotes/:id/accept` | Accept winning quote (Locks deal & atomically auto-rejects competitors) | Authenticated (Requester) |
+
+### Admin Operations & Moderation (`/api/v1/admin`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/admin/stats` | Platform health: aggregated user, vehicle, service & RFQ counts | Authenticated (Admin) |
+| `GET` | `/api/v1/admin/users` | Search & filter users by role, verification, suspension, or query | Authenticated (Admin) |
+| `PATCH` | `/api/v1/admin/garages/:id/verify` | Accredit or revoke garage partner status (Unlocks Tier 3 stamping) | Authenticated (Admin) |
+| `PATCH` | `/api/v1/admin/users/:id/suspend` | Suspend or reactivate account (Instant JWT token session termination) | Authenticated (Admin) |
 
 ---
 
