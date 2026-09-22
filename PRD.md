@@ -30,8 +30,12 @@ In Kenya, the second-hand vehicle market is riddled with lack of transparency:
 | 3 | **Informal fundis without smartphones** | Zero-Friction Owner Capture | Fundi does not need an app or account. Owner uploads a photo of the paper receipt/job card via their phone camera. |
 | 4 | **Odometer rollback** | Immutable Progression Curve | Mathematical validation: `mileageAtService >= previousServiceMileage`. Lower mileage triggers an `ODOMETER_ROLLBACK_DETECTED` red flag. |
 | 5 | **Kirinyaga Road bait-and-switch** | 48-Hour Price Lock | Dealer quotes carry a cryptographic/timestamped 48-hour price lock. Buyers rate dealers (1–5 stars); bait-and-switch causes dealer de-listing. |
-| 6 | **User laziness & forgetting to log** | SMS Micro-Checkins | Bi-monthly 1-click SMS check-in ("Reply with your dash km"). Algorithm recalibrates daily km burn rate automatically. |
-| 7 | **Chicken-and-egg marketplace dilemma** | Single-Player Utility Strategy | The platform provides 100% utility to car owners immediately for tracking & resale, even before parts dealers join. |
+| 6 | **Kirinyaga Road price fixing & collusion** | Blind Bidding Feed | Competitor parts dealers cannot view other quotes submitted on an RFQ. Only the vehicle owner sees ranked competitive bids. |
+| 7 | **Rogue garage self-verification fraud** | Admin Accreditation Gate | Commercial users cannot set `isVerifiedPartner: true` or fake ratings. Only platform administrators can verify garages via `/api/v1/admin/garages/:id/verify`. |
+| 8 | **Suspended dealer rogue session abuse** | Instant Token Invalidation | `protect` middleware checks `user.isSuspended` in MongoDB on every request. Banned accounts are locked out immediately with `403 Forbidden`. |
+| 9 | **Admin privilege escalation** | Strict Zod Whitelist & CLI Seed | Public registration whitelist permits only `['owner', 'dealer', 'garage']`. Admin accounts can only be provisioned via secure CLI script (`npm run seed:admin`). |
+| 10 | **User laziness & forgetting to log** | SMS Micro-Checkins | Bi-monthly 1-click SMS check-in ("Reply with your dash km"). Algorithm recalibrates daily km burn rate automatically. |
+| 11 | **Chicken-and-egg marketplace dilemma** | Single-Player Utility Strategy | The platform provides 100% utility to car owners immediately for tracking & resale, even before parts dealers join. |
 
 ---
 
@@ -47,8 +51,8 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
   - Image stored on Cloudinary with metadata inspection.
   - Public badge: *"Documented with physical receipt/invoice snapshot."*
 - 🟢 **Tier 3 — Partner Certified (Green Verified Shield):**
-  - The record is verified and confirmed directly by a registered, vetted AutoLog partner garage or authorized dealer.
-  - Highest trust level, guarantees authenticity to used car buyers.
+  - The record is verified and confirmed directly by a registered, accredited AutoLog partner garage or authorized dealer (`isVerifiedPartner: true`).
+  - Highest trust level, guarantees authenticity to used car buyers and lenders.
 
 ---
 
@@ -74,17 +78,20 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 
 ### 5.1 User
 - `_id`: ObjectId
-- `name`: String (required)
-- `email`: String (unique, required)
-- `phone`: String (Kenyan standard `+254XXXXXXXXX`, required)
-- `password`: String (bcrypt hashed)
+- `name`: String (required, min 2 chars)
+- `email`: String (unique, lowercase, required)
+- `phone`: String (Kenyan standard E.164 `+254XXXXXXXXX`, unique, required)
+- `password`: String (bcrypt hashed with salt rounds 12)
 - `role`: Enum (`'owner'`, `'dealer'`, `'garage'`, `'admin'`)
-- `businessDetails`:
+- `isSuspended`: Boolean (default: false)
+- `suspendedAt`: Date (optional)
+- `suspendedReason`: String (optional)
+- `businessDetails`: (Required for `garage` and `dealer`; strictly undefined for `owner`)
   - `businessName`: String
   - `location`: String (e.g. "Kirinyaga Road, Nairobi")
   - `mpesaTill`: String (optional)
-  - `isVerified`: Boolean (default: false)
-  - `rating`: Number (1.0 to 5.0)
+  - `isVerifiedPartner`: Boolean (default: false, toggled by admin only)
+  - `rating`: Number (1.0 to 5.0, default: 5.0)
   - `reviewCount`: Number (default: 0)
 - `timestamps`: true
 
@@ -96,12 +103,15 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - `model`: String (e.g., "Fielder", "Forester", "CX-5")
 - `year`: Number (e.g., 2018)
 - `engine`: String (e.g., "2.0L FB20", "2.2 SkyActiv-D")
+- `transmission`: Enum (`'AUTOMATIC'`, `'MANUAL'`, `'CVT'`)
+- `fuelType`: Enum (`'PETROL'`, `'DIESEL'`, `'HYBRID'`, `'ELECTRIC'`)
 - `vin`: String (Chassis number, optional)
 - `initialMileage`: Number (km)
-- `currentMileage`: Number (km)
+- `currentMileage`: Number (km, protected by anti-rollback guard)
+- `mileageUnit`: Enum (`'KM'`, `'MILES'`, default: `'KM'`)
 - `estDailyKm`: Number (default: 35)
 - `lastMileageUpdate`: Date
-- `passportSlug`: String (unique slug e.g., `kda-123a-7f89`)
+- `passportSlug`: String (unique slug e.g., `toyota-prado-abc123`)
 - `status`: Enum (`'active'`, `'sold'`, `'archived'`)
 - `timestamps`: true
 
@@ -117,13 +127,13 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - `garageName`: String
 - `receiptUrl`: String (Cloudinary URL, optional)
 - `verificationTier`: Enum (`'TIER_1_SELF'`, `'TIER_2_DOCUMENTED'`, `'TIER_3_PARTNER'`)
-- `isBackdated`: Boolean (calculated: true if serviceDate < entryDate - 30 days)
+- `isBackdated`: Boolean (true if `serviceDate < entryDate - 30 days`)
 - `timestamps`: true
 
 ### 5.4 PartRequest (RFQ)
 - `_id`: ObjectId
 - `requester`: Ref `User` (required)
-- `vehicle`: Ref `Vehicle` (required)
+- `vehicle`: Ref `Vehicle` (required, fitment specs auto-populated)
 - `partName`: String (e.g., "Front Brake Discs")
 - `category`: Enum (`'ENGINE'`, `'SUSPENSION'`, `'BRAKES'`, `'BODY'`, `'ELECTRICAL'`, `'FILTERS'`, `'TRANSMISSION'`, `'OTHER'`)
 - `oemPartNumber`: String (optional)
@@ -159,22 +169,54 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 
 ### 6.2 Kenyan Phone Number Standards
 - Allowed formats: `+2547XXXXXXXX` or `+2541XXXXXXXX` (Safaricom, Airtel, Telkom).
-- Input parser normalizes `07...` or `01...` into standard E.164 `+254...` format.
+- Input parser normalizes `07...` or `01...` into standard E.164 `+254...` format before database queries.
 
 ### 6.3 Kenyan Number Plate Validation
 - Regex pattern: `/^K[A-Z]{2}\s\d{3}[A-Z]$/` (e.g., `KCA 123A`, `KDK 450P`).
 
 ---
 
-## 7. Development Milestones
+## 7. DevOps, Automated Testing & Quality Assurance Architecture
+
+### 7.1 Automated Testing Engine (Vitest + Supertest + In-Memory MongoDB)
+- **Zero Cloud DB Pollution:** All tests execute against an ephemeral, in-memory MongoDB replica via `mongodb-memory-server`.
+- **Full Coverage:** 40 automated tests across 6 dedicated test suites:
+  - `health.test.ts` (3 tests)
+  - `auth.test.ts` (10 tests)
+  - `vehicle.test.ts` (6 tests)
+  - `service.test.ts` (5 tests)
+  - `rfq.test.ts` (8 tests)
+  - `admin.test.ts` (8 tests)
+- **Execution Speed:** Full regression test suite runs in under 18 seconds.
+
+### 7.2 Multi-Stage Production Containerization (Docker)
+- **Stage 1 (Builder):** Compiles TypeScript bundle to `dist/` on `node:22-alpine`.
+- **Stage 2 (Runner):** Lightweight production container (~180MB) running as non-root user `autolog:nodejs` (UID 1001) for defense-in-depth security.
+- **Docker Compose:** One-command orchestration (`api` on 5001, `mongo:7.0` on 27017 with persistent volume, `mongo-express` GUI on 8081).
+
+### 7.3 Continuous Integration (GitHub Actions CI/CD)
+- Triggers on push and PR to `main`.
+- Matrix quality gates across Node.js 20.x and 22.x on Ubuntu 24.04 LTS:
+  - `npm ci`
+  - `npx tsc --noEmit`
+  - `npm test` (40 tests)
+  - `npm run build`
+  - Multi-stage Docker container build verification check.
+
+---
+
+## 8. Development Milestones & Implementation Status
 
 - [x] **Milestone 1:** Git repository initialized, dependencies installed, TypeScript & tsconfig configured.
-- [x] **Milestone 2:** PRD & README documentation finalized with 7 Loophole Defenses.
-- [ ] **Milestone 3:** Database models & TypeScript interfaces (`User`, `Vehicle`, `ServiceRecord`, `PartRequest`, `PartQuote`).
-- [ ] **Milestone 4:** Database connection (`src/config/db.ts`) and environment validation.
-- [ ] **Milestone 5:** Express server setup with middleware (`helmet`, `cors`, `morgan`, error handling).
-- [ ] **Milestone 6:** Authentication system (JWT, bcrypt, role-based authorize middleware).
-- [ ] **Milestone 7:** Vehicle Passport CRUD with slug generation and data masking.
-- [ ] **Milestone 8:** Service Record logging with 3-Tier verification and odometer rollback protection.
-- [ ] **Milestone 9:** Spare Parts RFQ engine with 48-hour price lock logic.
-- [ ] **Milestone 10:** Africa's Talking SMS integration for micro-checkins.
+- [x] **Milestone 2:** PRD & README documentation finalized with Kenyan automotive context & anti-fraud defenses.
+- [x] **Milestone 3:** Database models & TypeScript interfaces (`User`, `Vehicle`, `ServiceRecord`, `PartRequest`, `PartQuote`).
+- [x] **Milestone 4:** Database connection (`src/config/db.ts`) with MongoDB Atlas lifecycle & auto-reconnect.
+- [x] **Milestone 5:** Express server bootstrap with security middleware (`helmet`, `cors`, `morgan`), custom error handler & OpenAPI 3.0 Swagger UI.
+- [x] **Milestone 6:** Dual-mode authentication system (JWT, bcrypt, email & E.164 Kenyan phone, role-based authorization middleware).
+- [x] **Milestone 7:** Vehicle Digital Passport CRUD with NTSA plate regex, SEO slug generation, anti-rollback odometer guard, and privacy masking.
+- [x] **Milestone 8:** Service Record logging with 3-Tier verification engine, odometer auto-advancement, and 30-day backdating audit detector.
+- [x] **Milestone 9:** Spare Parts RFQ engine with blind bidding dealer feed, 48-hour price lock guarantee, and atomic competitor rejection.
+- [x] **Milestone 10:** Admin Operations & Moderation module (garage accreditation, user suspension, and instant token revocation).
+- [x] **Milestone 11:** DevOps, Testing & CI/CD Pipeline (40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow).
+- [ ] **Milestone 12:** Africa's Talking SMS integration for service micro-checkins and quote alerts.
+
