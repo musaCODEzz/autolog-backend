@@ -65,6 +65,8 @@ Our backend is engineered specifically to prevent exploits in the Nairobi automo
 | **Kirinyaga Rd Broker Elimination** | Street middlemen ("Kamagera") marking up parts 30-50% with knockoffs. | Connects owners and garages directly to vetted parts shops with verified physical location and shelf stock photos. |
 | **"Bei Ilipanda Asubuhi" Bait & Switch** | Dealers quoting cheap on phone and hiking prices upon customer arrival. | Mandatory 48-Hour Price Lock Guarantee (`validUntil = now + 48h`) locked contractually upon quote submission. |
 | **Anti-Cartel Blind Bidding** | Competing spare parts dealers forming cartels to fix prices. | Dealers can only inspect vehicle fitment specs and their own submitted bid. Competing dealer quotes are strictly hidden. |
+| **WhatsApp Micro-Checkin Anti-Rollback** | Drivers attempting to report lower mileage via WhatsApp text. | Webhook parser mathematically validates `newMileage >= currentMileage`, rejecting rollback attempts via instant WhatsApp alert. |
+| **Kenyan Text Normalization** | Mixed texting habits ("80k", "79,200 km", "Niko 82000"). | Regex parser strips commas, handles "k" multipliers, and isolates the integer odometer reading. |
 
 ---
 
@@ -227,7 +229,11 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `PATCH` | `/api/v1/admin/garages/:id/verify` | Accredit or revoke garage partner status (Unlocks Tier 3 stamping) | Authenticated (Admin) |
 | `PATCH` | `/api/v1/admin/users/:id/suspend` | Suspend or reactivate account (Instant JWT token session termination) | Authenticated (Admin) |
 
----
+### WhatsApp Micro-Checkin Engine (`/api/v1/whatsapp`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/whatsapp/webhook` | Twilio WhatsApp incoming webhook (Parses replies, validates anti-rollback & auto-updates odometer) | Public (Twilio Signature Verified) |
+| `POST` | `/api/v1/whatsapp/checkin/trigger` | Trigger bi-monthly WhatsApp check-in prompt to vehicle owner | Authenticated (Admin / Cron) |
 
 ---
 
@@ -244,7 +250,7 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
 - [x] **Milestone 10: Admin Operations & Platform Moderation** — Garage verification, instant account suspension/ban, and platform metrics.
 - [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
-- [ ] **Milestone 12: SMS & Alert Infrastructure** — Africa's Talking integration for service micro-checkins and quote alerts.
+- [ ] **Milestone 12: Two-Way WhatsApp Micro-Checkin Engine (Twilio POC)** — WhatsApp webhook receiver, conversational odometer check-ins, anti-rollback validation, and dynamic burn rate recalibration.
 
 ---
 
