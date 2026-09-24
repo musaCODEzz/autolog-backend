@@ -1,13 +1,13 @@
 import twilio from 'twilio';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioNumber = process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886';
-
-// Initialize client only if credentials exist (prevents crash during tests)
-const client = accountSid && authToken && !accountSid.startsWith('ACtest')
-  ? twilio(accountSid, authToken)
-  : null;
+function getTwilioClient() {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (accountSid && authToken && !accountSid.startsWith('ACmock') && !accountSid.startsWith('ACtest')) {
+    return twilio(accountSid, authToken);
+  }
+  return null;
+}
 
 export interface ISendWhatsAppParams {
   to: string; // Kenyan phone, e.g. +254712345678
@@ -19,12 +19,15 @@ export interface ISendWhatsAppParams {
  */
 export async function sendWhatsAppMessage({ to, body }: ISendWhatsAppParams): Promise<boolean> {
   try {
+    const client = getTwilioClient();
+    const twilioNumber = process.env.TWILIO_WHATSAPP_NUMBER || '+14155238886';
+
     // Format to WhatsApp URI format: whatsapp:+2547...
     const formattedTo = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
     const formattedFrom = twilioNumber.startsWith('whatsapp:') ? twilioNumber : `whatsapp:${twilioNumber}`;
 
     if (!client) {
-      console.log(`[WhatsApp Mock] Sending to ${formattedTo}: ${body}`);
+      console.log(`[WhatsApp Mock Dispatch] To: ${formattedTo} | Message: ${body}`);
       return true; // Return true in test/dev mock mode
     }
 

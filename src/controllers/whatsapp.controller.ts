@@ -29,6 +29,23 @@ export function parseMileageFromText(text: string): number | null {
   return null;
 }
 
+function escapeXml(unsafe: string): string {
+  return unsafe.replace(/[<>&'"]/g, (c) => {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
+function sendTwiML(res: Response, message: string): void {
+  res.status(200).type('text/xml').send(`<Response><Message>${escapeXml(message)}</Message></Response>`);
+}
+
 /**
  * Handles Incoming WhatsApp Webhook from Twilio
  * Route: POST /api/v1/whatsapp/webhook
@@ -51,33 +68,21 @@ export async function handleIncomingWhatsApp(req: Request, res: Response): Promi
     // 2. Find user by phone
     const user = await User.findOne({ phone: normalizedPhone });
     if (!user) {
-      await sendWhatsAppMessage({
-        to: normalizedPhone,
-        body: 'AutoLog: Your phone number is not registered. Sign up at https://autolog.ke to track your car.',
-      });
-      res.status(200).send('<Response></Response>');
+      sendTwiML(res, 'AutoLog: Your phone number is not registered. Sign up at https://autolog.ke to track your car.');
       return;
     }
 
     // 3. Find active vehicles owned by this user
     const vehicles = await Vehicle.find({ owner: user._id, status: 'active' }).sort({ lastMileageUpdate: 1 });
     if (vehicles.length === 0) {
-      await sendWhatsAppMessage({
-        to: normalizedPhone,
-        body: 'AutoLog: You have no active vehicles registered under your account.',
-      });
-      res.status(200).send('<Response></Response>');
+      sendTwiML(res, 'AutoLog: You have no active vehicles registered under your account.');
       return;
     }
 
     // 4. Parse mileage from driver's text
     const newMileage = parseMileageFromText(incomingText);
     if (!newMileage) {
-      await sendWhatsAppMessage({
-        to: normalizedPhone,
-        body: `AutoLog: We could not understand that number. Please reply with just your dashboard digits, e.g. "79200".`,
-      });
-      res.status(200).send('<Response></Response>');
+      sendTwiML(res, 'AutoLog: We could not understand that number. Please reply with just your dashboard digits, e.g. "79200".');
       return;
     }
 
@@ -91,11 +96,10 @@ export async function handleIncomingWhatsApp(req: Request, res: Response): Promi
 
     // 6. Anti-Rollback Mathematical Guard
     if (newMileage < targetVehicle.currentMileage) {
-      await sendWhatsAppMessage({
-        to: normalizedPhone,
-        body: `⚠️ AutoLog Alert: Reported mileage (${newMileage.toLocaleString()} km) cannot be less than your last verified reading (${targetVehicle.currentMileage.toLocaleString()} km). Odometer rollback rejected.`,
-      });
-      res.status(200).send('<Response></Response>');
+      sendTwiML(
+        res,
+        `⚠️ AutoLog Alert: Reported mileage (${newMileage.toLocaleString()} km) cannot be less than your last verified reading (${targetVehicle.currentMileage.toLocaleString()} km). Odometer rollback rejected.`
+      );
       return;
     }
 
@@ -114,14 +118,11 @@ export async function handleIncomingWhatsApp(req: Request, res: Response): Promi
     targetVehicle.lastMileageUpdate = now;
     await targetVehicle.save();
 
-    // 9. Send success confirmation
-    await sendWhatsAppMessage({
-      to: normalizedPhone,
-      body: `✅ AutoLog: Updated! ${targetVehicle.make} ${targetVehicle.model} (${targetVehicle.plateNumber}) odometer set to ${newMileage.toLocaleString()} km. Driving burn rate: ~${updatedDailyKm} km/day.`,
-    });
-
-    // Return empty TwiML response to acknowledge Twilio
-    res.status(200).type('text/xml').send('<Response></Response>');
+    // 9. Send success confirmation via native TwiML reply
+    sendTwiML(
+      res,
+      `✅ AutoLog: Updated! ${targetVehicle.make} ${targetVehicle.model} (${targetVehicle.plateNumber}) odometer set to ${newMileage.toLocaleString()} km. Driving burn rate: ~${updatedDailyKm} km/day.`
+    );
   } catch (error) {
     console.error('[WhatsApp Webhook Controller Error]:', error);
     res.status(500).send('<Response></Response>');
