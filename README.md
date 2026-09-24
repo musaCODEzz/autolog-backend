@@ -86,7 +86,8 @@ autolog-backend/
 │   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
 │   │   ├── service.controller.ts  # 3-Tier service logging & history lookup
 │   │   ├── rfq.controller.ts      # RFQs, blind bidding & 48h price lock quotes
-│   │   └── admin.controller.ts    # Accreditation, moderation & platform analytics
+│   │   ├── admin.controller.ts    # Accreditation, moderation & platform analytics
+│   │   └── whatsapp.controller.ts # Twilio WhatsApp webhook, regex parsing & odometer sync
 │   │
 │   ├── middlewares/        # Express HTTP interceptors & gatekeepers
 │   │   ├── auth.middleware.ts     # JWT verify, suspension guard & RBAC authorize
@@ -104,7 +105,11 @@ autolog-backend/
 │   │   ├── vehicle.routes.ts # /api/v1/vehicles routes
 │   │   ├── service.routes.ts # /api/v1/services routes
 │   │   ├── rfq.routes.ts   # /api/v1/rfq routes
-│   │   └── admin.routes.ts # /api/v1/admin routes (RBAC Admin-only)
+│   │   ├── admin.routes.ts # /api/v1/admin routes (RBAC Admin-only)
+│   │   └── whatsapp.routes.ts # /api/v1/whatsapp webhook routes
+│   │
+│   ├── services/           # External integration services
+│   │   └── whatsapp.service.ts    # Twilio WhatsApp message dispatcher & mock fallback
 │   │
 │   ├── validators/         # Strict Zod schemas with Kenyan formatting rules
 │   │   ├── auth.validator.ts      # Phone, email, password & role refinements
@@ -250,13 +255,13 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
 - [x] **Milestone 10: Admin Operations & Platform Moderation** — Garage verification, instant account suspension/ban, and platform metrics.
 - [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
-- [ ] **Milestone 12: Two-Way WhatsApp Micro-Checkin Engine (Twilio POC)** — WhatsApp webhook receiver, conversational odometer check-ins, anti-rollback validation, and dynamic burn rate recalibration.
+- [x] **Milestone 12: Two-Way WhatsApp Micro-Checkin Engine (Twilio POC)** — WhatsApp webhook receiver, conversational odometer check-ins, anti-rollback validation, and dynamic burn rate recalibration.
 
 ---
 
 ## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
 
-AutoLog KE features a comprehensive 40-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~15s), and complete offline testability.
+AutoLog KE features a comprehensive 44-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~18s), and complete offline testability.
 
 ```bash
 # Run full automated test suite once
@@ -266,7 +271,7 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (40/40 Tests Passing)
+### Test Coverage Summary (44/44 Tests Passing)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
@@ -275,6 +280,7 @@ npm run test:watch
 | **Service Engine** | `tests/service.test.ts` | 5 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag |
 | **RFQ Engine** | `tests/rfq.test.ts` | 8 | Part request creation, blind dealer feed, 48h price lock, duplicate quote prevention, winning quote acceptance |
 | **Admin Operations**| `tests/admin.test.ts` | 8 | Platform metrics, RBAC unauthorized/forbidden blocks, garage partner verification, user suspension/ban |
+| **WhatsApp Micro-Checkin**| `tests/whatsapp.test.ts` | 4 | Conversational odometer update, Kenyan "k" suffix ("80k"), anti-rollback rejection, malformed text resilience |
 
 ---
 
