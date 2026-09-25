@@ -65,8 +65,8 @@ Our backend is engineered specifically to prevent exploits in the Nairobi automo
 | **Kirinyaga Rd Broker Elimination** | Street middlemen ("Kamagera") marking up parts 30-50% with knockoffs. | Connects owners and garages directly to vetted parts shops with verified physical location and shelf stock photos. |
 | **"Bei Ilipanda Asubuhi" Bait & Switch** | Dealers quoting cheap on phone and hiking prices upon customer arrival. | Mandatory 48-Hour Price Lock Guarantee (`validUntil = now + 48h`) locked contractually upon quote submission. |
 | **Anti-Cartel Blind Bidding** | Competing spare parts dealers forming cartels to fix prices. | Dealers can only inspect vehicle fitment specs and their own submitted bid. Competing dealer quotes are strictly hidden. |
-| **WhatsApp Micro-Checkin Anti-Rollback** | Drivers attempting to report lower mileage via WhatsApp text. | Webhook parser mathematically validates `newMileage >= currentMileage`, rejecting rollback attempts via instant WhatsApp alert. |
-| **Kenyan Text Normalization** | Mixed texting habits ("80k", "79,200 km", "Niko 82000"). | Regex parser strips commas, handles "k" multipliers, and isolates the integer odometer reading. |
+| **One-Click Check-in Anti-Rollback** | Drivers attempting to report lower mileage via check-in link. | Server mathematically validates `newMileage >= currentMileage`, rejecting rollback attempts with `400 Bad Request`. |
+| **Cryptographic Token Tampering** | Attackers forging check-in links to update strangers' vehicles. | Signed HMAC-SHA256 tokens strictly verify `vehicleId`, expiring in 72 hours with single-purpose check-in scope. |
 
 ---
 
@@ -86,8 +86,7 @@ autolog-backend/
 │   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
 │   │   ├── service.controller.ts  # 3-Tier service logging & history lookup
 │   │   ├── rfq.controller.ts      # RFQs, blind bidding & 48h price lock quotes
-│   │   ├── admin.controller.ts    # Accreditation, moderation & platform analytics
-│   │   └── whatsapp.controller.ts # Twilio WhatsApp webhook, regex parsing & odometer sync
+│   │   └── admin.controller.ts    # Accreditation, moderation & platform analytics
 │   │
 │   ├── middlewares/        # Express HTTP interceptors & gatekeepers
 │   │   ├── auth.middleware.ts     # JWT verify, suspension guard & RBAC authorize
@@ -105,11 +104,9 @@ autolog-backend/
 │   │   ├── vehicle.routes.ts # /api/v1/vehicles routes
 │   │   ├── service.routes.ts # /api/v1/services routes
 │   │   ├── rfq.routes.ts   # /api/v1/rfq routes
-│   │   ├── admin.routes.ts # /api/v1/admin routes (RBAC Admin-only)
-│   │   └── whatsapp.routes.ts # /api/v1/whatsapp webhook routes
+│   │   └── admin.routes.ts # /api/v1/admin routes (RBAC Admin-only)
 │   │
-│   ├── services/           # External integration services
-│   │   └── whatsapp.service.ts    # Twilio WhatsApp message dispatcher & mock fallback
+│   ├── services/           # External integration services (Cloudinary, etc.)
 │   │
 │   ├── validators/         # Strict Zod schemas with Kenyan formatting rules
 │   │   ├── auth.validator.ts      # Phone, email, password & role refinements
@@ -234,11 +231,12 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `PATCH` | `/api/v1/admin/garages/:id/verify` | Accredit or revoke garage partner status (Unlocks Tier 3 stamping) | Authenticated (Admin) |
 | `PATCH` | `/api/v1/admin/users/:id/suspend` | Suspend or reactivate account (Instant JWT token session termination) | Authenticated (Admin) |
 
-### WhatsApp Micro-Checkin Engine (`/api/v1/whatsapp`)
+### One-Click Mobile Web Check-in Engine (`/api/v1/vehicles/checkin`)
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/v1/whatsapp/webhook` | Twilio WhatsApp incoming webhook (Parses replies, validates anti-rollback & auto-updates odometer) | Public (Twilio Signature Verified) |
-| `POST` | `/api/v1/whatsapp/checkin/trigger` | Trigger bi-monthly WhatsApp check-in prompt to vehicle owner | Authenticated (Admin / Cron) |
+| `POST` | `/api/v1/vehicles/:id/checkin-token` | Generate signed, tamper-proof magic check-in token (72h expiry) | Authenticated (Owner / Cron) |
+| `GET` | `/api/v1/vehicles/checkin/:token` | Resolve token for mobile UI (Returns car info, masked plate, previous km) | **Public (Token Governed)** |
+| `POST` | `/api/v1/vehicles/checkin/:token` | Submit new odometer reading, anti-rollback guard & recalculate daily burn rate | **Public (Token Governed)** |
 
 ---
 
@@ -255,13 +253,13 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
 - [x] **Milestone 10: Admin Operations & Platform Moderation** — Garage verification, instant account suspension/ban, and platform metrics.
 - [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
-- [x] **Milestone 12: Two-Way WhatsApp Micro-Checkin Engine (Twilio POC)** — WhatsApp webhook receiver, conversational odometer check-ins, anti-rollback validation, and dynamic burn rate recalibration.
+- [ ] **Milestone 12: One-Click Mobile Web Check-in Engine** — Cryptographic magic tokens, anti-rollback defense, dynamic burn rate recalibration, and mobile-first micro-checkin UI.
 
 ---
 
 ## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
 
-AutoLog KE features a comprehensive 44-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~18s), and complete offline testability.
+AutoLog KE features a comprehensive 40-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~17s), and complete offline testability.
 
 ```bash
 # Run full automated test suite once
@@ -271,7 +269,7 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (44/44 Tests Passing)
+### Test Coverage Summary (40/40 Tests Passing)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
@@ -280,7 +278,6 @@ npm run test:watch
 | **Service Engine** | `tests/service.test.ts` | 5 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag |
 | **RFQ Engine** | `tests/rfq.test.ts` | 8 | Part request creation, blind dealer feed, 48h price lock, duplicate quote prevention, winning quote acceptance |
 | **Admin Operations**| `tests/admin.test.ts` | 8 | Platform metrics, RBAC unauthorized/forbidden blocks, garage partner verification, user suspension/ban |
-| **WhatsApp Micro-Checkin**| `tests/whatsapp.test.ts` | 4 | Conversational odometer update, Kenyan "k" suffix ("80k"), anti-rollback rejection, malformed text resilience |
 
 ---
 
