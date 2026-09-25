@@ -10,7 +10,6 @@ import vehicleRoutes from './routes/vehicle.routes';
 import serviceRoutes from './routes/service.routes';
 import rfqRoutes from './routes/rfq.routes';
 import adminRoutes from './routes/admin.routes';
-import whatsappRoutes from './routes/whatsapp.routes';
 
 
 const app: Express = express();
@@ -67,7 +66,6 @@ app.use('/api/v1/vehicles', vehicleRoutes);
 app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/rfq', rfqRoutes);
 app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/whatsapp', whatsappRoutes);
 
 //404 route handler
 app.use((_req: Request, res: Response) => {
