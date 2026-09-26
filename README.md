@@ -84,6 +84,7 @@ autolog-backend/
 │   ├── controllers/        # Business logic & response formatters
 │   │   ├── auth.controller.ts     # Register, dual-mode login, getMe
 │   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
+│   │   ├── checkin.controller.ts  # One-Click Mobile Web Check-in & burn rate recalibration
 │   │   ├── service.controller.ts  # 3-Tier service logging & history lookup
 │   │   ├── rfq.controller.ts      # RFQs, blind bidding & 48h price lock quotes
 │   │   └── admin.controller.ts    # Accreditation, moderation & platform analytics
@@ -111,6 +112,7 @@ autolog-backend/
 │   ├── validators/         # Strict Zod schemas with Kenyan formatting rules
 │   │   ├── auth.validator.ts      # Phone, email, password & role refinements
 │   │   ├── vehicle.validator.ts   # NTSA plates, specs, photo URLs
+│   │   ├── checkin.validator.ts   # Odometer check-in reading schema
 │   │   ├── service.validator.ts   # Categories, dates, costs, receipts
 │   │   ├── rfq.validator.ts       # Part requests, categories, 48h quotes
 │   │   └── admin.validator.ts     # Partner verification & suspension schemas
@@ -120,6 +122,7 @@ autolog-backend/
 │   │
 │   ├── utils/              # Pure helper functions (independent of Express)
 │   │   ├── jwt.ts          # Cryptographic token generator & verifier
+│   │   ├── checkinToken.ts # Signed 72h magic check-in token generator & validator
 │   │   ├── phone.ts        # Kenyan E.164 normalizer (+254...) & regex check
 │   │   └── plate.ts        # NTSA number plate normalizer & privacy maskers
 │   │
@@ -253,13 +256,13 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
 - [x] **Milestone 10: Admin Operations & Platform Moderation** — Garage verification, instant account suspension/ban, and platform metrics.
 - [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
-- [ ] **Milestone 12: One-Click Mobile Web Check-in Engine** — Cryptographic magic tokens, anti-rollback defense, dynamic burn rate recalibration, and mobile-first micro-checkin UI.
+- [x] **Milestone 12: One-Click Mobile Web Check-in Engine** — Cryptographic magic tokens, anti-rollback defense, dynamic burn rate recalibration, and mobile-first micro-checkin UI.
 
 ---
 
 ## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
 
-AutoLog KE features a comprehensive 40-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~17s), and complete offline testability.
+AutoLog KE features a comprehensive 49-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~18s), and complete offline testability.
 
 ```bash
 # Run full automated test suite once
@@ -269,12 +272,13 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (40/40 Tests Passing)
+### Test Coverage Summary (49/49 Tests Passing)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual-mode login, commercial isolation, Zod error mapping |
 | **Vehicle Passport** | `tests/vehicle.test.ts` | 6 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport |
+| **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic token, owner isolation, anti-rollback (400), dynamic burn rate recalibration |
 | **Service Engine** | `tests/service.test.ts` | 5 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag |
 | **RFQ Engine** | `tests/rfq.test.ts` | 8 | Part request creation, blind dealer feed, 48h price lock, duplicate quote prevention, winning quote acceptance |
 | **Admin Operations**| `tests/admin.test.ts` | 8 | Platform metrics, RBAC unauthorized/forbidden blocks, garage partner verification, user suspension/ban |

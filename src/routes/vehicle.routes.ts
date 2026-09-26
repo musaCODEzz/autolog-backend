@@ -14,6 +14,12 @@ import {
   updateMileageSchema,
   updateVehicleSchema,
 } from '../validators/vehicle.validator';
+import {
+  generateVehicleCheckinToken,
+  getCheckinDetails,
+  submitCheckin,
+} from '../controllers/checkin.controller';
+import { submitCheckinSchema } from '../validators/checkin.validator';
 
 const router = Router();
 
@@ -43,6 +49,73 @@ const router = Router();
  *         description: Vehicle passport not found or is private
  */
 router.get('/passport/:slug', getPublicPassport);
+
+// ==========================================
+// 📲 ONE-CLICK CHECK-IN (Token Governed)
+// ==========================================
+
+/**
+ * @openapi
+ * /api/v1/vehicles/checkin/{token}:
+ *   get:
+ *     summary: Resolve vehicle details for mobile check-in screen using magic token
+ *     description: Public endpoint called by the mobile check-in screen. Validates the 72h token and displays vehicle make, model, plate, and previous recorded mileage.
+ *     tags: [Vehicles]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Cryptographically signed 72-hour check-in JWT
+ *     responses:
+ *       200:
+ *         description: Vehicle details retrieved successfully
+ *       401:
+ *         description: Invalid or expired check-in token
+ *       404:
+ *         description: Vehicle not found or inactive
+ */
+router.get('/checkin/:token', getCheckinDetails);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/checkin/{token}:
+ *   post:
+ *     summary: Submit new odometer reading via magic token
+ *     description: Updates vehicle odometer reading. Enforces anti-rollback defense and automatically recalibrates daily driving burn rate if >= 1 day has elapsed.
+ *     tags: [Vehicles]
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Cryptographically signed 72-hour check-in JWT
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newMileage
+ *             properties:
+ *               newMileage:
+ *                 type: integer
+ *                 example: 83500
+ *                 description: New odometer reading in KM (must be >= current mileage)
+ *     responses:
+ *       200:
+ *         description: Odometer reading updated and burn rate recalibrated successfully
+ *       400:
+ *         description: Odometer rollback detected (new mileage lower than current)
+ *       401:
+ *         description: Invalid or expired check-in token
+ *       404:
+ *         description: Vehicle not found or inactive
+ */
+router.post('/checkin/:token', validate(submitCheckinSchema), submitCheckin);
 
 // ==========================================
 // 🔒 PROTECTED ROUTES (Require Bearer Token)
@@ -212,6 +285,32 @@ router.patch(
   validate(updateMileageSchema),
   updateMileage
 );
+
+/**
+ * @openapi
+ * /api/v1/vehicles/{id}/checkin-token:
+ *   post:
+ *     summary: Generate signed 72-hour magic check-in link for a vehicle
+ *     description: Creates a tamper-evident, time-limited magic link for the car owner to check in their odometer reading without logging in.
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Vehicle MongoDB ObjectId
+ *     responses:
+ *       200:
+ *         description: Magic check-in link generated successfully
+ *       401:
+ *         description: Unauthorized (Token required)
+ *       404:
+ *         description: Vehicle not found or not owned by user
+ */
+router.post('/:id/checkin-token', protect, generateVehicleCheckinToken);
 
 /**
  * @openapi
