@@ -34,8 +34,9 @@ In Kenya, the second-hand vehicle market is riddled with lack of transparency:
 | 7 | **Rogue garage self-verification fraud** | Admin Accreditation Gate | Commercial users cannot set `isVerifiedPartner: true` or fake ratings. Only platform administrators can verify garages via `/api/v1/admin/garages/:id/verify`. |
 | 8 | **Suspended dealer rogue session abuse** | Instant Token Invalidation | `protect` middleware checks `user.isSuspended` in MongoDB on every request. Banned accounts are locked out immediately with `403 Forbidden`. |
 | 9 | **Admin privilege escalation** | Strict Zod Whitelist & CLI Seed | Public registration whitelist permits only `['owner', 'dealer', 'garage']`. Admin accounts can only be provisioned via secure CLI script (`npm run seed:admin`). |
-| 10 | **User laziness & forgetting to log** | SMS Micro-Checkins | Bi-monthly 1-click SMS check-in ("Reply with your dash km"). Algorithm recalibrates daily km burn rate automatically. |
+| 10 | **User laziness & forgetting to log** | One-Click Magic Check-ins | Cryptographically signed 72-hour magic links (`https://autolog.ke/checkin?token=...`). Zero password or app download required. |
 | 11 | **Chicken-and-egg marketplace dilemma** | Single-Player Utility Strategy | The platform provides 100% utility to car owners immediately for tracking & resale, even before parts dealers join. |
+| 12 | **Driver notification fatigue & spam** | Anti-Spam Idempotency Guard | Scans enforce `lastCheckinPromptSentAt <= 7 days ago`, guaranteeing motorists are never spammed twice in the same week. |
 
 ---
 
@@ -68,9 +69,10 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
    - **Brake Pads Inspection:** Every 15,000 km.
    - **Automatic/CVT Transmission Fluid:** Every 40,000 km.
    - **Timing Belt / Water Pump:** Every 100,000 km.
-4. **SMS/WhatsApp Micro-Checkins:**
-   - Sent every 30–45 days via Africa's Talking.
-   - Message: *"AutoLog: Your [Make Model] is estimated at [Est Km] km. Reply with your dash number to keep service alerts accurate."*
+4. **Weekly One-Click Mobile Web Check-ins:**
+   - Dispatched automatically every Sunday at 18:00 EAT via automated cron daemon (`node-cron`).
+   - Message: *"Habari [Name]! Your [Make Model] was last recorded at [Current Km] km. Tap here to update your odometer in 5 seconds: https://autolog.ke/checkin?token=..."*
+   - Submissions mathematically enforce anti-rollback (`newMileage >= currentMileage`) and dynamically recalibrate `estDailyKm`.
 
 ---
 
@@ -111,6 +113,7 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - `mileageUnit`: Enum (`'KM'`, `'MILES'`, default: `'KM'`)
 - `estDailyKm`: Number (default: 35)
 - `lastMileageUpdate`: Date
+- `lastCheckinPromptSentAt`: Date (optional audit timestamp for weekly dispatcher)
 - `passportSlug`: String (unique slug e.g., `toyota-prado-abc123`)
 - `status`: Enum (`'active'`, `'sold'`, `'archived'`)
 - `timestamps`: true
@@ -180,14 +183,16 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 
 ### 7.1 Automated Testing Engine (Vitest + Supertest + In-Memory MongoDB)
 - **Zero Cloud DB Pollution:** All tests execute against an ephemeral, in-memory MongoDB replica via `mongodb-memory-server`.
-- **Full Coverage:** 40 automated tests across 6 dedicated test suites:
+- **Full Coverage:** 54 automated tests across 8 dedicated test suites:
   - `health.test.ts` (3 tests)
   - `auth.test.ts` (10 tests)
   - `vehicle.test.ts` (6 tests)
+  - `checkin.test.ts` (9 tests)
+  - `dispatcher.test.ts` (5 tests)
   - `service.test.ts` (5 tests)
   - `rfq.test.ts` (8 tests)
   - `admin.test.ts` (8 tests)
-- **Execution Speed:** Full regression test suite runs in under 18 seconds.
+- **Execution Speed:** Full regression test suite runs in ~19 seconds.
 
 ### 7.2 Multi-Stage Production Containerization (Docker)
 - **Stage 1 (Builder):** Compiles TypeScript bundle to `dist/` on `node:22-alpine`.
@@ -218,5 +223,6 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - [x] **Milestone 9:** Spare Parts RFQ engine with blind bidding dealer feed, 48-hour price lock guarantee, and atomic competitor rejection.
 - [x] **Milestone 10:** Admin Operations & Moderation module (garage accreditation, user suspension, and instant token revocation).
 - [x] **Milestone 11:** DevOps, Testing & CI/CD Pipeline (40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow).
-- [ ] **Milestone 12:** Africa's Talking SMS integration for service micro-checkins and quote alerts.
+- [x] **Milestone 12:** One-Click Mobile Web Check-in Engine (Cryptographically signed 72-hour magic tokens, anti-rollback validation, dynamic daily burn rate recalibration, and mobile card UI).
+- [x] **Milestone 13:** Automated Weekly Check-in Dispatcher (Sunday 18:00 EAT cron daemon, anti-spam idempotency guard `lastCheckinPromptSentAt`, and Admin on-demand batch trigger endpoint).
 
