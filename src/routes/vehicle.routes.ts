@@ -7,7 +7,7 @@ import {
   updateVehicle,
   getPublicPassport,
 } from '../controllers/vehicle.controller';
-import { protect } from '../middlewares/auth.middleware';
+import { protect, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import {
   createVehicleSchema,
@@ -18,6 +18,7 @@ import {
   generateVehicleCheckinToken,
   getCheckinDetails,
   submitCheckin,
+  triggerStaleDispatch,
 } from '../controllers/checkin.controller';
 import { submitCheckinSchema } from '../validators/checkin.validator';
 
@@ -77,6 +78,30 @@ router.get('/passport/:slug', getPublicPassport);
  *         description: Vehicle not found or inactive
  */
 router.get('/checkin/:token', getCheckinDetails);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/checkin/dispatch-stale:
+ *   post:
+ *     summary: Trigger check-in prompts batch for stale vehicles
+ *     description: Scans for active vehicles not updated in >= 7 days and generates fresh 72h check-in magic links.
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Batch dispatch completed successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Admin only)
+ */
+router.post(
+  '/checkin/dispatch-stale',
+  protect,
+  authorize('admin'),
+  triggerStaleDispatch
+);
 
 /**
  * @openapi
@@ -311,6 +336,7 @@ router.patch(
  *         description: Vehicle not found or not owned by user
  */
 router.post('/:id/checkin-token', protect, generateVehicleCheckinToken);
+
 
 /**
  * @openapi

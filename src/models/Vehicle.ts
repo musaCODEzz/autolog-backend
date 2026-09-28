@@ -21,6 +21,7 @@ export interface IVehicle {
   currentMileage: number;
   estDailyKm: number;
   lastMileageUpdate: Date;
+  lastCheckinPromptSentAt?: Date;
   passportSlug: string;
   status: VehicleStatus;
   photos: string[];
@@ -116,6 +117,10 @@ const vehicleSchema = new Schema<IVehicle>(
     lastMileageUpdate: {
       type: Date,
       default: Date.now,
+    },
+    lastCheckinPromptSentAt: {
+      type: Date,
+      default: null,
     },
     passportSlug: {
       type: String,

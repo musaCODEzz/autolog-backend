@@ -1,3 +1,4 @@
+import { initCheckinCron } from "./services/dispatcher.service";
 import 'dotenv/config';
 
 
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 5000;
 // Connect to Database & Start Express Server
 const startServer = async (): Promise<void> => {
     await connectDB();
+    initCheckinCron();
     app.listen(PORT, () => {
         console.log(`
 🚀 ===================================================

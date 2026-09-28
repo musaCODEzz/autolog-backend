@@ -3,6 +3,8 @@ import { Vehicle } from '../models/Vehicle';
 import { AuthRequest } from '../middlewares/auth.middleware';
 import { generateCheckinToken, verifyCheckinToken } from '../utils/checkinToken';
 import { SubmitCheckinInput } from '../validators/checkin.validator';
+import { dispatchStaleCheckinPrompts } from '../services/dispatcher.service';
+
 
 /**
  * @desc    Generate a single-purpose, signed 72-hour check-in link for a vehicle
@@ -177,6 +179,29 @@ export const submitCheckin = async (
         recalculatedDailyKm: vehicle.estDailyKm,
         lastMileageUpdate: vehicle.lastMileageUpdate,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Manually trigger check-in prompts for stale vehicles
+ * @route   POST /api/v1/vehicles/checkin/dispatch-stale
+ * @access  Private (Admin only)
+ */
+export const triggerStaleDispatch = async (
+  _req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const summary = await dispatchStaleCheckinPrompts();
+
+    res.status(200).json({
+      success: true,
+      message: `Check-in dispatch completed. Prompted ${summary.dispatchedCount} stale vehicle(s).`,
+      data: summary,
     });
   } catch (error) {
     next(error);

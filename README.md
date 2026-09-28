@@ -107,7 +107,8 @@ autolog-backend/
 │   │   ├── rfq.routes.ts   # /api/v1/rfq routes
 │   │   └── admin.routes.ts # /api/v1/admin routes (RBAC Admin-only)
 │   │
-│   ├── services/           # External integration services (Cloudinary, etc.)
+│   ├── services/           # External integration services
+│   │   └── dispatcher.service.ts # Automated Sunday check-in cron & stale vehicle batch dispatcher
 │   │
 │   ├── validators/         # Strict Zod schemas with Kenyan formatting rules
 │   │   ├── auth.validator.ts      # Phone, email, password & role refinements
@@ -240,6 +241,7 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `POST` | `/api/v1/vehicles/:id/checkin-token` | Generate signed, tamper-proof magic check-in token (72h expiry) | Authenticated (Owner / Cron) |
 | `GET` | `/api/v1/vehicles/checkin/:token` | Resolve token for mobile UI (Returns car info, masked plate, previous km) | **Public (Token Governed)** |
 | `POST` | `/api/v1/vehicles/checkin/:token` | Submit new odometer reading, anti-rollback guard & recalculate daily burn rate | **Public (Token Governed)** |
+| `POST` | `/api/v1/vehicles/checkin/dispatch-stale` | Admin on-demand batch trigger for stale vehicle prompts (Anti-spam guarded) | Authenticated (Admin) |
 
 ---
 
@@ -257,12 +259,13 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 10: Admin Operations & Platform Moderation** — Garage verification, instant account suspension/ban, and platform metrics.
 - [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
 - [x] **Milestone 12: One-Click Mobile Web Check-in Engine** — Cryptographic magic tokens, anti-rollback defense, dynamic burn rate recalibration, and mobile-first micro-checkin UI.
+- [x] **Milestone 13: Automated Weekly Check-in Dispatcher** — Sunday 18:00 EAT cron daemon, anti-spam idempotency guard, and Admin on-demand batch trigger.
 
 ---
 
 ## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
 
-AutoLog KE features a comprehensive 49-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~18s), and complete offline testability.
+AutoLog KE features a comprehensive 54-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~19s), and complete offline testability.
 
 ```bash
 # Run full automated test suite once
@@ -272,13 +275,14 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (49/49 Tests Passing)
+### Test Coverage Summary (54/54 Tests Passing)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual-mode login, commercial isolation, Zod error mapping |
 | **Vehicle Passport** | `tests/vehicle.test.ts` | 6 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport |
 | **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic token, owner isolation, anti-rollback (400), dynamic burn rate recalibration |
+| **Weekly Dispatcher**| `tests/dispatcher.test.ts`| 5 | Stale vehicle detection, anti-spam idempotency, admin on-demand trigger, role defense |
 | **Service Engine** | `tests/service.test.ts` | 5 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag |
 | **RFQ Engine** | `tests/rfq.test.ts` | 8 | Part request creation, blind dealer feed, 48h price lock, duplicate quote prevention, winning quote acceptance |
 | **Admin Operations**| `tests/admin.test.ts` | 8 | Platform metrics, RBAC unauthorized/forbidden blocks, garage partner verification, user suspension/ban |
