@@ -12,6 +12,10 @@ import {
     maskPlateNumber,
     maskChassisNumber,
 } from '../utils/plate';
+import {
+    calculateServicePredictions,
+    mapServiceRecordsToRuleHistory,
+} from '../utils/predictions';
 /**
  * @desc Register new vehicle to digital passport
  * @route POST /api/v1/vehicles
@@ -304,3 +308,66 @@ export const getPublicPassport = async (
     next(error);
   }
 };
+
+/**
+ * @desc    Predictive Maintenance & Service Due Schedules
+ * @route   GET /api/v1/vehicles/:id/predictions
+ * @access  Private (Owner or Admin)
+ */
+export const getVehiclePredictions = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const isOwnerOrAdmin =
+      req.user?.role === 'admin'
+        ? { _id: req.params.id }
+        : { _id: req.params.id, owner: req.user!._id };
+
+    const vehicle = await Vehicle.findOne(isOwnerOrAdmin);
+
+    if (!vehicle) {
+      res.status(404).json({
+        success: false,
+        message: 'Vehicle not found or you do not have permission to view predictions for it',
+      });
+      return;
+    }
+
+    // 1. Fetch all logged service records for this vehicle
+    const serviceRecords = await ServiceRecord.find({ vehicle: vehicle._id })
+      .select('serviceType mileageAtService serviceDate partsReplaced description garageName')
+      .sort({ mileageAtService: -1, serviceDate: -1 });
+
+    // 2. Map service records to latest rule history
+    const history = mapServiceRecordsToRuleHistory(serviceRecords);
+
+    // 3. Compute predictive maintenance schedules and alerts
+    const predictionsSummary = calculateServicePredictions(
+      vehicle.currentMileage,
+      vehicle.estDailyKm,
+      history
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        vehicle: {
+          id: vehicle._id,
+          plateNumber: vehicle.plateNumber,
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          currentMileage: vehicle.currentMileage,
+          estDailyKm: vehicle.estDailyKm,
+          lastMileageUpdate: vehicle.lastMileageUpdate,
+        },
+        predictionsSummary,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

@@ -225,4 +225,5 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - [x] **Milestone 11:** DevOps, Testing & CI/CD Pipeline (40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow).
 - [x] **Milestone 12:** One-Click Mobile Web Check-in Engine (Cryptographically signed 72-hour magic tokens, anti-rollback validation, dynamic daily burn rate recalibration, and mobile card UI).
 - [x] **Milestone 13:** Automated Weekly Check-in Dispatcher (Sunday 18:00 EAT cron daemon, anti-spam idempotency guard `lastCheckinPromptSentAt`, and Admin on-demand batch trigger endpoint).
+- [x] **Milestone 14:** Smart Predictive Maintenance REST API (`GET /api/v1/vehicles/:id/predictions` with dynamic Kenyan service interval calculator, MongoDB service history mapping, urgency sorting `OVERDUE` / `DUE_SOON` / `HEALTHY`, cambelt advisories, OpenAPI documentation, and 65/65 passing Vitest tests).
 

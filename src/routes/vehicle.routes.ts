@@ -6,6 +6,7 @@ import {
   updateMileage,
   updateVehicle,
   getPublicPassport,
+  getVehiclePredictions,
 } from '../controllers/vehicle.controller';
 import { protect, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -265,6 +266,47 @@ router.get('/', protect, getMyVehicles);
  *       404:
  *         description: Vehicle not found or belongs to another user
  */
+/**
+ * @openapi
+ * /api/v1/vehicles/{id}/predictions:
+ *   get:
+ *     summary: Predictive Maintenance & Service Due Schedules
+ *     description: Computes upcoming service intervals, remaining mileage, estimated due dates, and urgent maintenance alerts based on verified odometer readings and logged service history.
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Vehicle MongoDB ObjectId
+ *     responses:
+ *       200:
+ *         description: Predictive maintenance schedule generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     vehicle:
+ *                       type: object
+ *                     predictionsSummary:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized (Token required)
+ *       404:
+ *         description: Vehicle not found or not owned by user
+ */
+router.get('/:id/predictions', protect, getVehiclePredictions);
+
 router.get('/:id', protect, getVehicleById);
 
 /**

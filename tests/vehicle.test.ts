@@ -131,4 +131,104 @@ describe('🚗 Vehicle Digital Passport Module', () => {
       expect(passport.trustScore.totalServices).toBe(0);
     });
   });
+
+  describe('🧠 GET /api/v1/vehicles/:id/predictions (Predictive Maintenance REST API)', () => {
+    let strangerToken: string;
+
+    it('🛡️ should REJECT requests without JWT authorization token', async () => {
+      const res = await request(app).get(`/api/v1/vehicles/${vehicleId}/predictions`);
+
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('🛡️ should REJECT requests from another user who does not own the vehicle', async () => {
+      const strangerRes = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          name: 'Stranger User',
+          email: 'stranger.predictions@autolog.co.ke',
+          phone: '0799887766',
+          password: 'Password123!',
+          role: 'owner',
+        });
+      strangerToken = strangerRes.body.data.token;
+
+      const res = await request(app)
+        .get(`/api/v1/vehicles/${vehicleId}/predictions`)
+        .set('Authorization', `Bearer ${strangerToken}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('do not have permission');
+    });
+
+    it('📊 should calculate baseline predictive maintenance schedules for vehicle owner', async () => {
+      // Vehicle is at 78,000 km
+      const res = await request(app)
+        .get(`/api/v1/vehicles/${vehicleId}/predictions`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const { vehicle, predictionsSummary } = res.body.data;
+      expect(vehicle.plateNumber).toBe('KDD 842P');
+      expect(vehicle.currentMileage).toBe(78000);
+
+      expect(predictionsSummary.currentMileage).toBe(78000);
+      expect(predictionsSummary.overallStatus).toBeDefined();
+      expect(predictionsSummary.nextUpcomingService).toBeDefined();
+      expect(predictionsSummary.predictions.length).toBeGreaterThanOrEqual(6);
+
+      // Verify Engine Oil schedule (due at 80,000 km => 2,000 km remaining)
+      const oilPrediction = predictionsSummary.predictions.find(
+        (p: { key: string }) => p.key === 'ENGINE_OIL'
+      );
+      expect(oilPrediction).toBeDefined();
+      expect(oilPrediction.nextDueMileage).toBe(80000);
+      expect(oilPrediction.kmRemaining).toBe(2000);
+      expect(oilPrediction.urgency).toBe('HEALTHY');
+      expect(oilPrediction.estimatedCostKes).toBe(6500);
+      expect(oilPrediction.alertMessage).toContain('Engine Oil');
+    });
+
+    it('🛠️ should dynamically adapt predictions when a new service record is logged', async () => {
+      // Log an oil change performed at 79,000 km
+      const serviceRes = await request(app)
+        .post('/api/v1/services')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          vehicleId,
+          serviceType: ['OIL_CHANGE'],
+          serviceDate: '2026-09-20',
+          mileageAtService: 79000,
+          costKes: 7000,
+          garageName: 'AutoXpress Nairobi West',
+          description: 'Synthetic oil and OEM filter replacement',
+          partsReplaced: [{ partName: 'Castrol Magnatec 5W-30', costKes: 5500 }],
+        });
+
+      expect(serviceRes.status).toBe(201);
+
+      // Now query predictions again: next oil due should be 79,000 + 5,000 = 84,000 km
+      const res = await request(app)
+        .get(`/api/v1/vehicles/${vehicleId}/predictions`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(res.status).toBe(200);
+      const oilPrediction = res.body.data.predictionsSummary.predictions.find(
+        (p: { key: string }) => p.key === 'ENGINE_OIL'
+      );
+
+      expect(oilPrediction).toBeDefined();
+      expect(oilPrediction.lastServiceMileage).toBe(79000);
+      expect(oilPrediction.nextDueMileage).toBe(84000);
+      // Vehicle auto-progressed to 79,000 km => 84,000 - 79,000 = 5,000 km remaining
+      expect(oilPrediction.kmRemaining).toBe(5000);
+      expect(oilPrediction.urgency).toBe('HEALTHY');
+      expect(oilPrediction.alertMessage).toContain('84,000 km');
+    });
+  });
 });
+
