@@ -130,6 +130,19 @@ describe('🚗 Vehicle Digital Passport Module', () => {
       expect(passport.currentMileage).toBe(78000);
       expect(passport.trustScore.totalServices).toBe(0);
     });
+
+    it('🩺 should attach predictive maintenance health badges to public passport for buyers', async () => {
+      const res = await request(app).get(`/api/v1/vehicles/passport/${passportSlug}`);
+
+      expect(res.status).toBe(200);
+      const passport = res.body.data.passport;
+
+      expect(passport.predictiveHealth).toBeDefined();
+      expect(passport.predictiveHealth.overallHealthStatus).toBe('HEALTHY');
+      expect(passport.predictiveHealth.nextUpcomingService.name).toContain('Engine Oil');
+      expect(passport.predictiveHealth.nextUpcomingService.kmRemaining).toBe(2000);
+      expect(passport.predictiveHealth.nextUpcomingService.alertMessage).toBeDefined();
+    });
   });
 
   describe('🧠 GET /api/v1/vehicles/:id/predictions (Predictive Maintenance REST API)', () => {

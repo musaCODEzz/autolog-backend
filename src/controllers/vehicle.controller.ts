@@ -276,7 +276,28 @@ export const getPublicPassport = async (
     const tier2DocumentedServices = serviceRecords.filter(
       (r) => r.verificationTier === 'TIER_2_DOCUMENTED'
     ).length;
-    // 3. Construct Privacy-Safe Passport Response
+
+    // 3. Compute Predictive Maintenance Health
+    const history = mapServiceRecordsToRuleHistory(serviceRecords);
+    const predictionsSummary = calculateServicePredictions(
+      vehicle.currentMileage,
+      vehicle.estDailyKm,
+      history
+    );
+
+    const predictiveHealth = {
+      overallHealthStatus: predictionsSummary.overallStatus,
+      nextUpcomingService: {
+        name: predictionsSummary.nextUpcomingService.name,
+        nextDueMileage: predictionsSummary.nextUpcomingService.nextDueMileage,
+        kmRemaining: predictionsSummary.nextUpcomingService.kmRemaining,
+        daysRemaining: predictionsSummary.nextUpcomingService.daysRemaining,
+        urgency: predictionsSummary.nextUpcomingService.urgency,
+        alertMessage: predictionsSummary.nextUpcomingService.alertMessage,
+      },
+    };
+
+    // 4. Construct Privacy-Safe Passport Response
     const publicPassport = {
       passportSlug: vehicle.passportSlug,
       make: vehicle.make,
@@ -298,6 +319,7 @@ export const getPublicPassport = async (
         tier2DocumentedCount: tier2DocumentedServices,
         verifiedPartnerStatus: tier3PartnerServices > 0,
       },
+      predictiveHealth,
       serviceHistory: serviceRecords,
     };
     res.status(200).json({

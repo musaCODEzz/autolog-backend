@@ -42,8 +42,8 @@ const router = Router();
  *         required: true
  *         schema:
  *           type: string
- *         description: Unique vehicle passport slug (e.g. mazda-cx5-7f9a2b)
- *         example: mazda-cx5-7f9a2b
+ *         description: Unique vehicle passport slug (e.g. mazda-cx5-z8lsgs)
+ *         example: mazda-cx5-z8lsgs
  *     responses:
  *       200:
  *         description: Public vehicle passport retrieved successfully
