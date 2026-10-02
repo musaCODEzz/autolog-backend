@@ -183,16 +183,17 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 
 ### 7.1 Automated Testing Engine (Vitest + Supertest + In-Memory MongoDB)
 - **Zero Cloud DB Pollution:** All tests execute against an ephemeral, in-memory MongoDB replica via `mongodb-memory-server`.
-- **Full Coverage:** 54 automated tests across 8 dedicated test suites:
+- **Full Coverage:** 66 automated tests across 9 dedicated test suites:
   - `health.test.ts` (3 tests)
   - `auth.test.ts` (10 tests)
-  - `vehicle.test.ts` (6 tests)
+  - `vehicle.test.ts` (11 tests)
   - `checkin.test.ts` (9 tests)
   - `dispatcher.test.ts` (5 tests)
   - `service.test.ts` (5 tests)
   - `rfq.test.ts` (8 tests)
   - `admin.test.ts` (8 tests)
-- **Execution Speed:** Full regression test suite runs in ~19 seconds.
+  - `predictions.test.ts` (7 tests)
+- **Execution Speed:** Full regression test suite runs sequentially in ~37 seconds with zero flaky port collisions.
 
 ### 7.2 Multi-Stage Production Containerization (Docker)
 - **Stage 1 (Builder):** Compiles TypeScript bundle to `dist/` on `node:22-alpine`.
@@ -204,7 +205,7 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - Matrix quality gates across Node.js 20.x and 22.x on Ubuntu 24.04 LTS:
   - `npm ci`
   - `npx tsc --noEmit`
-  - `npm test` (40 tests)
+  - `npm test` (66 tests)
   - `npm run build`
   - Multi-stage Docker container build verification check.
 
@@ -222,8 +223,10 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - [x] **Milestone 8:** Service Record logging with 3-Tier verification engine, odometer auto-advancement, and 30-day backdating audit detector.
 - [x] **Milestone 9:** Spare Parts RFQ engine with blind bidding dealer feed, 48-hour price lock guarantee, and atomic competitor rejection.
 - [x] **Milestone 10:** Admin Operations & Moderation module (garage accreditation, user suspension, and instant token revocation).
-- [x] **Milestone 11:** DevOps, Testing & CI/CD Pipeline (40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow).
-- [x] **Milestone 12:** One-Click Mobile Web Check-in Engine (Cryptographically signed 72-hour magic tokens, anti-rollback validation, dynamic daily burn rate recalibration, and mobile card UI).
+- [x] **Milestone 11:** DevOps, Testing & CI/CD Pipeline (66-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow).
+- [x] **Milestone 12:** One-Click Mobile Web Check-in Engine (Cryptographically signed 72-hour magic tokens, anti-rollback validation, dynamic daily burn rate recalibration, and standalone React Vite mobile frontend).
 - [x] **Milestone 13:** Automated Weekly Check-in Dispatcher (Sunday 18:00 EAT cron daemon, anti-spam idempotency guard `lastCheckinPromptSentAt`, and Admin on-demand batch trigger endpoint).
-- [x] **Milestone 14:** Smart Predictive Maintenance REST API (`GET /api/v1/vehicles/:id/predictions` with dynamic Kenyan service interval calculator, MongoDB service history mapping, urgency sorting `OVERDUE` / `DUE_SOON` / `HEALTHY`, cambelt advisories, OpenAPI documentation, and 65/65 passing Vitest tests).
+- [x] **Milestone 14:** Smart Predictive Maintenance REST API (`GET /api/v1/vehicles/:id/predictions` with dynamic Kenyan service interval calculator, MongoDB service history mapping, urgency sorting `OVERDUE` / `DUE_SOON` / `HEALTHY`, and cambelt replacement advisories).
+- [x] **Milestone 15:** Public Vehicle Digital Passport with Predictive Health Badges (`GET /api/v1/vehicles/passport/:slug` returning `predictiveHealth`, `overallHealthStatus`, `nextUpcomingService`, and privacy-masked identifiers for prospective car buyers).
+
 

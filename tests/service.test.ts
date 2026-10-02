@@ -10,13 +10,14 @@ describe('🔧 Service Records & 3-Tier Verification Engine', () => {
   let passportSlug: string;
 
   beforeAll(async () => {
+    const unique = Date.now();
     // 1. Create owner
     const ownerRes = await request(app)
       .post('/api/v1/auth/register')
       .send({
         name: 'Grace Mutua',
-        email: 'grace.service@autolog.co.ke',
-        phone: '0722334455',
+        email: `grace.service.${unique}@autolog.co.ke`,
+        phone: `072233${Math.floor(1000 + Math.random() * 9000)}`,
         password: 'Password123!',
         role: 'owner',
       });
@@ -27,8 +28,8 @@ describe('🔧 Service Records & 3-Tier Verification Engine', () => {
       .post('/api/v1/vehicles')
       .set('Authorization', `Bearer ${ownerToken}`)
       .send({
-        plateNumber: 'KDA 777X',
-        chassisNumber: 'JT111GJ120005555',
+        plateNumber: `KDG ${Math.floor(100 + Math.random() * 899)}X`,
+        chassisNumber: `JT111GJ${unique}`,
         make: 'Subaru',
         model: 'Forester',
         year: 2018,
