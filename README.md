@@ -83,7 +83,7 @@ autolog-backend/
 │   │
 │   ├── controllers/        # Business logic & response formatters
 │   │   ├── auth.controller.ts     # Register, dual-mode login, getMe
-│   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport
+│   │   ├── vehicle.controller.ts  # Vehicle CRUD, odometer, public passport & predictive health
 │   │   ├── checkin.controller.ts  # One-Click Mobile Web Check-in & burn rate recalibration
 │   │   ├── service.controller.ts  # 3-Tier service logging & history lookup
 │   │   ├── rfq.controller.ts      # RFQs, blind bidding & 48h price lock quotes
@@ -125,7 +125,8 @@ autolog-backend/
 │   │   ├── jwt.ts          # Cryptographic token generator & verifier
 │   │   ├── checkinToken.ts # Signed 72h magic check-in token generator & validator
 │   │   ├── phone.ts        # Kenyan E.164 normalizer (+254...) & regex check
-│   │   └── plate.ts        # NTSA number plate normalizer & privacy maskers
+│   │   ├── plate.ts        # NTSA number plate normalizer & privacy maskers
+│   │   └── predictions.ts  # Smart predictive maintenance engine & interval calculator
 │   │
 │   ├── app.ts              # Express configuration, security headers (Helmet/CORS)
 │   └── server.ts           # Server bootstrap with dotenv hoisting guard
@@ -198,7 +199,7 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `POST` | `/api/v1/auth/login` | Dual-mode login using Email OR Kenyan Phone | Public |
 | `GET` | `/api/v1/auth/me` | Fetch currently logged-in user profile | Authenticated |
 
-### Vehicle Passport (`/api/v1/vehicles`)
+### Vehicle Passport & Predictive Health Engine (`/api/v1/vehicles`)
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/api/v1/vehicles` | Register a new vehicle to digital passport | Authenticated (Owner) |
@@ -206,7 +207,8 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `GET` | `/api/v1/vehicles/:id` | Get vehicle details by ID (Owner isolation) | Authenticated (Owner) |
 | `PATCH` | `/api/v1/vehicles/:id` | Update vehicle profile specs/photos | Authenticated (Owner) |
 | `PATCH` | `/api/v1/vehicles/:id/mileage` | Update odometer (Rollback prevention) | Authenticated (Owner) |
-| `GET` | `/api/v1/vehicles/passport/:slug` | Public sanitized passport with masked plate | **Public** |
+| `GET` | `/api/v1/vehicles/:id/predictions` | Predictive maintenance schedule & urgency alerts (Oil, ATF, timing belt) | Authenticated (Owner / Admin) |
+| `GET` | `/api/v1/vehicles/passport/:slug` | Public sanitized passport with masked plate & predictive health badges | **Public** |
 
 ### Service History & Verification Engine (`/api/v1/services`)
 | Method | Endpoint | Description | Access |
@@ -257,15 +259,17 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 8: Service Records & 3-Tier Verification Engine** — Tier 1 (Self), Tier 2 (Documented with Receipt), Tier 3 (Partner Verified), auto-odometer sync, backdating detector (>30 days), and trust score computation.
 - [x] **Milestone 9: Spare Parts RFQ Engine** — Kirinyaga Rd anti-broker RFQ feed, blind bidding, and 48-hour price lock guarantee.
 - [x] **Milestone 10: Admin Operations & Platform Moderation** — Garage verification, instant account suspension/ban, and platform metrics.
-- [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 40-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
+- [x] **Milestone 11: DevOps, Testing & CI/CD Pipeline** — 66-test Vitest suite, in-memory MongoDB, multi-stage Dockerfile, docker-compose, and GitHub Actions CI workflow.
 - [x] **Milestone 12: One-Click Mobile Web Check-in Engine** — Cryptographic magic tokens, anti-rollback defense, dynamic burn rate recalibration, and mobile-first micro-checkin UI.
 - [x] **Milestone 13: Automated Weekly Check-in Dispatcher** — Sunday 18:00 EAT cron daemon, anti-spam idempotency guard, and Admin on-demand batch trigger.
+- [x] **Milestone 14: Smart Predictive Maintenance REST API** — Dynamic Kenyan service interval calculator, MongoDB service history mapping, urgency sorting (OVERDUE / DUE_SOON / HEALTHY), and cambelt replacement advisories.
+- [x] **Milestone 15: Public Vehicle Digital Passport with Predictive Health Badges** — Attaches real-time predictive maintenance health badges to the public digital passport for prospective car buyers and lenders with zero credential leaks.
 
 ---
 
 ## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
 
-AutoLog KE features a comprehensive 54-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~19s), and complete offline testability.
+AutoLog KE features a comprehensive 66-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~38s), and complete offline testability.
 
 ```bash
 # Run full automated test suite once
@@ -275,17 +279,18 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (54/54 Tests Passing)
+### Test Coverage Summary (66/66 Tests Passing)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual-mode login, commercial isolation, Zod error mapping |
-| **Vehicle Passport** | `tests/vehicle.test.ts` | 6 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport |
+| **Vehicle Passport** | `tests/vehicle.test.ts` | 11 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport & health badges |
 | **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic token, owner isolation, anti-rollback (400), dynamic burn rate recalibration |
 | **Weekly Dispatcher**| `tests/dispatcher.test.ts`| 5 | Stale vehicle detection, anti-spam idempotency, admin on-demand trigger, role defense |
 | **Service Engine** | `tests/service.test.ts` | 5 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag |
 | **RFQ Engine** | `tests/rfq.test.ts` | 8 | Part request creation, blind dealer feed, 48h price lock, duplicate quote prevention, winning quote acceptance |
 | **Admin Operations**| `tests/admin.test.ts` | 8 | Platform metrics, RBAC unauthorized/forbidden blocks, garage partner verification, user suspension/ban |
+| **Predictive Engine**| `tests/predictions.test.ts` | 7 | Dynamic service intervals, overdue/due soon sorting, cambelt replacement threshold, burn rate estimations |
 
 ---
 
@@ -324,7 +329,7 @@ Every pull request and push to the `main` branch automatically triggers our cont
 1. **Matrix Quality Gate (Node 20.x & 22.x):**
    - Clean install (`npm ci`)
    - Static type-checking (`npx tsc --noEmit`)
-   - Automated test suite execution (`npm test` — 40 in-memory tests)
+   - Automated test suite execution (`npm test` — 66 in-memory tests)
    - Production TypeScript compilation (`npm run build`)
 2. **Docker Build Gate:**
    - Multi-stage Docker container build verification (`docker build`) to guarantee deployment artifacts never break.
