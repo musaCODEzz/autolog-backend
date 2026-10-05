@@ -16,6 +16,7 @@ import {
     calculateServicePredictions,
     mapServiceRecordsToRuleHistory,
 } from '../utils/predictions';
+import { generateVehicleCertificate } from '../utils/certificate';
 /**
  * @desc Register new vehicle to digital passport
  * @route POST /api/v1/vehicles
@@ -387,6 +388,83 @@ export const getVehiclePredictions = async (
         },
         predictionsSummary,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Generate Official Digital Vehicle Handover Certificate
+ * @route   GET /api/v1/vehicles/:id/certificate
+ * @access  Private (Owner or Admin)
+ */
+export const getVehicleCertificate = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const isOwnerOrAdmin =
+      req.user?.role === 'admin'
+        ? { _id: req.params.id }
+        : { _id: req.params.id, owner: req.user!._id };
+
+    const vehicle = await Vehicle.findOne(isOwnerOrAdmin);
+
+    if (!vehicle) {
+      res.status(404).json({
+        success: false,
+        message: 'Vehicle not found or you do not have permission to view its certificate',
+      });
+      return;
+    }
+
+    const serviceRecords = await ServiceRecord.find({ vehicle: vehicle._id })
+      .select('serviceType mileageAtService serviceDate verificationTier isBackdated garageName partsReplaced description')
+      .sort({ mileageAtService: -1, serviceDate: -1 });
+
+    const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, false);
+
+    res.status(200).json({
+      success: true,
+      data: { certificate },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get Public Digital Vehicle Handover Certificate (Masked Privacy)
+ * @route   GET /api/v1/vehicles/passport/:slug/certificate
+ * @access  Public
+ */
+export const getPublicPassportCertificate = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const vehicle = await Vehicle.findOne({ passportSlug: req.params.slug });
+
+    if (!vehicle) {
+      res.status(404).json({
+        success: false,
+        message: 'Vehicle passport not found',
+      });
+      return;
+    }
+
+    const serviceRecords = await ServiceRecord.find({ vehicle: vehicle._id })
+      .select('serviceType mileageAtService serviceDate verificationTier isBackdated garageName partsReplaced description')
+      .sort({ mileageAtService: -1, serviceDate: -1 });
+
+    const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, true);
+
+    res.status(200).json({
+      success: true,
+      data: { certificate },
     });
   } catch (error) {
     next(error);

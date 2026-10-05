@@ -7,6 +7,8 @@ import {
   updateVehicle,
   getPublicPassport,
   getVehiclePredictions,
+  getVehicleCertificate,
+  getPublicPassportCertificate,
 } from '../controllers/vehicle.controller';
 import { protect, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -51,6 +53,42 @@ const router = Router();
  *         description: Vehicle passport not found or is private
  */
 router.get('/passport/:slug', getPublicPassport);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/passport/{slug}/certificate:
+ *   get:
+ *     summary: Public Digital Vehicle Handover Certificate (Masked Privacy)
+ *     description: Generates a tamper-evident digital vehicle passport handover certificate with verified odometer integrity, 3-tier trust metrics, predictive health status, and cryptographic SHA-256 verification hash. Plate and chassis are masked for public privacy.
+ *     tags: [Vehicles]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unique vehicle passport slug (e.g. mazda-cx5-z8lsgs)
+ *         example: mazda-cx5-z8lsgs
+ *     responses:
+ *       200:
+ *         description: Public vehicle certificate generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     certificate:
+ *                       type: object
+ *       404:
+ *         description: Vehicle passport not found
+ */
+router.get('/passport/:slug/certificate', getPublicPassportCertificate);
 
 // ==========================================
 // 📲 ONE-CLICK CHECK-IN (Token Governed)
@@ -306,6 +344,45 @@ router.get('/', protect, getMyVehicles);
  *         description: Vehicle not found or not owned by user
  */
 router.get('/:id/predictions', protect, getVehiclePredictions);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/{id}/certificate:
+ *   get:
+ *     summary: Generate Official Digital Vehicle Handover Certificate
+ *     description: Produces an official tamper-proof digital handover certificate with unmasked NTSA plate, chassis number, verified odometer progression, trust score breakdown, and predictive health badge for sale handover, SACCO compliance, and bank financing.
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Vehicle MongoDB ObjectId
+ *     responses:
+ *       200:
+ *         description: Official vehicle handover certificate generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     certificate:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized (Token required)
+ *       404:
+ *         description: Vehicle not found or not owned by user
+ */
+router.get('/:id/certificate', protect, getVehicleCertificate);
 
 router.get('/:id', protect, getVehicleById);
 

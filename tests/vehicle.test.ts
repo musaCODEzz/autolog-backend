@@ -243,5 +243,73 @@ describe('🚗 Vehicle Digital Passport Module', () => {
       expect(oilPrediction.alertMessage).toContain('84,000 km');
     });
   });
+
+  describe('📜 Digital Handover Certificate Endpoints', () => {
+    it('🔒 should reject unauthenticated requests to GET /api/v1/vehicles/:id/certificate with 401', async () => {
+      const res = await request(app).get(`/api/v1/vehicles/${vehicleId}/certificate`);
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('📄 should generate official unmasked handover certificate for vehicle owner', async () => {
+      const res = await request(app)
+        .get(`/api/v1/vehicles/${vehicleId}/certificate`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      const cert = res.body.data.certificate;
+      expect(cert).toBeDefined();
+
+      // Tamper-evident identity
+      expect(cert.certificateNumber).toMatch(/^AL-KE-\d{4}-TOYOT-[A-Z0-9]{4}$/);
+      expect(cert.verificationHash).toHaveLength(64);
+      expect(cert.verificationUrl).toContain(`/passport/${passportSlug}`);
+
+      // Owner sees unmasked plate and chassis
+      expect(cert.vehicle.plateNumber).toBe('KDD 842P');
+      expect(cert.vehicle.chassisNumber).toBe('JT111GJ120009842');
+      expect(cert.vehicle.currentMileage).toBeGreaterThanOrEqual(75000);
+
+      // Odometer integrity & trust metrics
+      expect(cert.odometerIntegrity.status).toBe('PASSED_VERIFIED');
+      expect(cert.trustScore.totalServices).toBeGreaterThanOrEqual(1);
+
+      // Predictive health
+      expect(cert.predictiveHealth.overallHealthStatus).toBeDefined();
+      expect(cert.predictiveHealth.nextUpcomingService).toBeDefined();
+    });
+
+    it('🛡️ should generate public masked certificate with masked plate and chassis without auth', async () => {
+      const res = await request(app).get(
+        `/api/v1/vehicles/passport/${passportSlug}/certificate`
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      const cert = res.body.data.certificate;
+      expect(cert).toBeDefined();
+
+      // Masked identifiers for public buyer protection
+      expect(cert.vehicle.plateNumber).toBe('KD* ***P');
+      expect(cert.vehicle.chassisNumber).toContain('...9842');
+      expect(cert.vehicle.chassisNumber).not.toBe('JT111GJ120009842');
+
+      // Valid SHA-256 hash & serial
+      expect(cert.certificateNumber).toMatch(/^AL-KE-\d{4}-TOYOT-[A-Z0-9]{4}$/);
+      expect(cert.verificationHash).toHaveLength(64);
+      expect(cert.odometerIntegrity.status).toBe('PASSED_VERIFIED');
+    });
+
+    it('🔍 should return 404 for unknown passport slug certificate', async () => {
+      const res = await request(app).get(
+        '/api/v1/vehicles/passport/unknown-slug-999xyz/certificate'
+      );
+
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('not found');
+    });
+  });
 });
 
