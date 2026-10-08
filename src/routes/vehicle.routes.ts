@@ -23,6 +23,7 @@ import {
   submitCheckin,
   triggerStaleDispatch,
 } from '../controllers/checkin.controller';
+import { getVehicleAnalytics } from '../controllers/analytics.controller';
 import { submitCheckinSchema } from '../validators/checkin.validator';
 
 const router = Router();
@@ -383,6 +384,32 @@ router.get('/:id/predictions', protect, getVehiclePredictions);
  *         description: Vehicle not found or not owned by user
  */
 router.get('/:id/certificate', protect, getVehicleCertificate);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/{id}/analytics:
+ *   get:
+ *     summary: Vehicle Total Cost of Ownership (TCO) & Spend Analytics
+ *     description: Returns aggregated maintenance spend, cost per kilometer, monthly average expenses, and category breakdown via MongoDB aggregation pipeline.
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Vehicle MongoDB ObjectId
+ *     responses:
+ *       200:
+ *         description: Vehicle analytics generated successfully
+ *       401:
+ *         description: Unauthorized (Token required)
+ *       404:
+ *         description: Vehicle not found or not owned by user
+ */
+router.get('/:id/analytics', protect, getVehicleAnalytics);
 
 router.get('/:id', protect, getVehicleById);
 
