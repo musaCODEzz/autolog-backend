@@ -228,5 +228,7 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - [x] **Milestone 13:** Automated Weekly Check-in Dispatcher (Sunday 18:00 EAT cron daemon, anti-spam idempotency guard `lastCheckinPromptSentAt`, and Admin on-demand batch trigger endpoint).
 - [x] **Milestone 14:** Smart Predictive Maintenance REST API (`GET /api/v1/vehicles/:id/predictions` with dynamic Kenyan service interval calculator, MongoDB service history mapping, urgency sorting `OVERDUE` / `DUE_SOON` / `HEALTHY`, and cambelt replacement advisories).
 - [x] **Milestone 15:** Public Vehicle Digital Passport with Predictive Health Badges (`GET /api/v1/vehicles/passport/:slug` returning `predictiveHealth`, `overallHealthStatus`, `nextUpcomingService`, and privacy-masked identifiers for prospective car buyers).
+- [x] **Milestone 16:** Official Digital Vehicle Passport & Handover Certificate (`GET /api/v1/vehicles/:id/certificate` and `GET /api/v1/vehicles/passport/:slug/certificate` with deterministic SHA-256 cryptographic tamper-evident verification hash, Kenyan serial formatting, and buyer privacy masking).
+- [x] **Milestone 17:** Vehicle Total Cost of Ownership (TCO) & Spend Analytics (`GET /api/v1/vehicles/:id/analytics` with MongoDB aggregation pipelines, proportional cost allocation across multi-category invoices, running cost per kilometer KES/km, and ranked expense breakdown).
 
 
