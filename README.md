@@ -14,6 +14,20 @@
 
 ---
 
+## 📚 Master Architectural & Engineering Documentation
+
+For deep technical specifications, system workflows, and loophole analysis, consult our comprehensive architecture documents:
+
+| Document | Focus & Key Contents |
+|---|---|
+| 🏗️ [**Technical Requirements Document (TRD)**](docs/TECHNICAL_REQUIREMENTS.md) | Architectural topology, NFRs, security layers, API standards, and latency benchmarks. |
+| 🔄 [**App Flows & System Workflows**](docs/APP_FLOWS_AND_ARCHITECTURE.md) | Complete Mermaid flowcharts, sequence diagrams, and actor journeys (Owner, Garage, Dealer, Buyer). |
+| 🎨 [**Design Brief & Product Strategy**](docs/DESIGN_BRIEF.md) | Nairobi market context, user personas, UX heuristics, color tokens, and paper-to-digital mechanics. |
+| 🗄️ [**Database Schema & Background Jobs**](docs/DATABASE_SCHEMA_AND_JOBS.md) | MongoDB Mongoose models, Mermaid ERD, compound indexing, aggregation pipelines, and cron daemons. |
+| 🛡️ [**System Loopholes & Implementation Roadmap**](docs/SYSTEM_LOOPHOLES_AND_IMPLEMENTATION.md) | Analysis of 14 fraud attack vectors, mathematical models, SHA-256 fingerprinting, and future roadmap. |
+
+---
+
 ## 🚘 The Problem in the Kenyan Automotive Market
 
 1. **The Odometer Rollback Epidemic:** Over 60% of used cars sold on Kenyan classifieds (Jiji, Facebook Marketplace, physical yards along Ngong Road and Kiambu Road) have clocked odometers to artificially inflate resale values.
