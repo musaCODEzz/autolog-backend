@@ -160,4 +160,64 @@ describe('🔧 Service Records & 3-Tier Verification Engine', () => {
       expect(res.body.data.passport.currentMileage).toBe(55000);
     });
   });
+
+    describe('PATCH /api/v1/services/:id/receipt (Attach Receipt & Upgrade Tier)', () => {
+    it('🛡️ should REJECT invalid receipt URL format with 400 Bad Request', async () => {
+      // Create a temporary Tier 1 record
+      const createRes = await request(app)
+        .post('/api/v1/services')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          vehicleId,
+          serviceType: ['OIL_CHANGE'],
+          serviceDate: '2026-09-01',
+          mileageAtService: 56000,
+          costKes: 6500,
+          garageName: 'Fundi Juma Ngara',
+        });
+
+      const tempId = createRes.body.data.serviceRecord._id;
+
+      const res = await request(app)
+        .patch(`/api/v1/services/${tempId}/receipt`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ receiptUrl: 'not-a-valid-url' });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('🟡 should attach receipt and UPGRADE verificationTier from TIER_1_SELF to TIER_2_DOCUMENTED', async () => {
+      // 1. Create a Tier 1 record without receipt
+      const createRes = await request(app)
+        .post('/api/v1/services')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          vehicleId,
+          serviceType: ['BRAKES'],
+          serviceDate: '2026-09-05',
+          mileageAtService: 57000,
+          costKes: 8500,
+          garageName: 'AutoXpress Ngong Rd',
+        });
+
+      const recordId = createRes.body.data.serviceRecord._id;
+      expect(createRes.body.data.serviceRecord.verificationTier).toBe('TIER_1_SELF');
+
+      // 2. Attach receipt URL and observe upgrade
+      const res = await request(app)
+        .patch(`/api/v1/services/${recordId}/receipt`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          receiptUrl: 'https://res.cloudinary.com/autolog/image/upload/v12345/receipt_57000.jpg',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.serviceRecord.verificationTier).toBe('TIER_2_DOCUMENTED');
+      expect(res.body.data.serviceRecord.receiptUrl).toBe(
+        'https://res.cloudinary.com/autolog/image/upload/v12345/receipt_57000.jpg'
+      );
+    });
+  });
+
 });

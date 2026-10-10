@@ -3,10 +3,11 @@ import {
   createServiceRecord,
   getVehicleServiceHistory,
   getServiceRecordById,
+  attachServiceReceipt,
 } from '../controllers/service.controller';
 import { protect } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
-import { createServiceRecordSchema } from '../validators/service.validator';
+import { createServiceRecordSchema, attachReceiptSchema } from '../validators/service.validator';
 
 const router = Router();
 
@@ -148,5 +149,47 @@ router.get('/vehicle/:vehicleId', getVehicleServiceHistory);
  *         description: Service record not found
  */
 router.get('/:id', getServiceRecordById);
+
+/**
+ * @openapi
+ * /api/v1/services/{id}/receipt:
+ *   patch:
+ *     summary: Attach receipt proof to a service record and upgrade verification tier
+ *     description: Allows the vehicle owner or logger to attach a receipt photo, upgrading the record from Tier 1 (Self) to Tier 2 (Documented).
+ *     tags: [Services]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Service record MongoDB ObjectId
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - receiptUrl
+ *             properties:
+ *               receiptUrl:
+ *                 type: string
+ *                 example: "https://res.cloudinary.com/autolog/image/upload/v123/receipt.jpg"
+ *     responses:
+ *       200:
+ *         description: Receipt attached and tier upgraded successfully
+ *       400:
+ *         description: Invalid URL format
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (not vehicle owner, logger, or admin)
+ *       404:
+ *         description: Service record not found
+ */
+router.patch('/:id/receipt', validate(attachReceiptSchema), attachServiceReceipt);
 
 export default router;

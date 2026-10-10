@@ -169,3 +169,60 @@ export const getServiceRecordById = async (
     next(error);
   }
 };
+
+/**
+ * @desc    Attach receipt proof to a service record and upgrade verification tier
+ * @route   PATCH /api/v1/services/:id/receipt
+ * @access  Private (Vehicle Owner, Logger, or Admin)
+ */
+export const attachServiceReceipt = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { receiptUrl } = req.body;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
+    // 1. Find the service record
+    const record = await ServiceRecord.findById(id);
+    if (!record) {
+      res.status(404).json({
+        success: false,
+        message: 'Service record not found',
+      });
+      return;
+    }
+
+    // 2. Authorization check: Must be vehicle owner, logger, or admin
+    const vehicle = await Vehicle.findById(record.vehicle);
+    const isOwner = vehicle && vehicle.owner.toString() === req.user!._id.toString();
+    const isLogger = record.loggedBy.toString() === req.user!._id.toString();
+    const isAdmin = req.user!.role === 'admin';
+
+    if (!isOwner && !isLogger && !isAdmin) {
+      res.status(403).json({
+        success: false,
+        message: 'Forbidden: You do not have permission to attach a receipt to this service record',
+      });
+      return;
+    }
+
+    // 3. Upgrade verification tier from TIER_1_SELF to TIER_2_DOCUMENTED
+    if (record.verificationTier === 'TIER_1_SELF') {
+      record.verificationTier = 'TIER_2_DOCUMENTED';
+    }
+
+    // 4. Update receipt URL and persist to MongoDB
+    record.receiptUrl = receiptUrl;
+    await record.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Receipt attached and verification tier upgraded successfully',
+      data: { serviceRecord: record },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

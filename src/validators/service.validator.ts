@@ -111,3 +111,12 @@ export const createServiceRecordSchema = z.object({
 });
 
 export type CreateServiceRecordInput = z.infer<typeof createServiceRecordSchema>;
+
+/**
+ * Schema for attaching / upgrading receipt URL
+ */
+export const attachReceiptSchema = z.object({
+    receiptUrl: z.url({ message: 'Receipt URL must be a valid URL (e.g. https://res.cloudinary.com/...)' }),
+});
+
+export type AttachReceiptInput = z.infer<typeof attachReceiptSchema>;
