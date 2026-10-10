@@ -230,5 +230,6 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - [x] **Milestone 15:** Public Vehicle Digital Passport with Predictive Health Badges (`GET /api/v1/vehicles/passport/:slug` returning `predictiveHealth`, `overallHealthStatus`, `nextUpcomingService`, and privacy-masked identifiers for prospective car buyers).
 - [x] **Milestone 16:** Official Digital Vehicle Passport & Handover Certificate (`GET /api/v1/vehicles/:id/certificate` and `GET /api/v1/vehicles/passport/:slug/certificate` with deterministic SHA-256 cryptographic tamper-evident verification hash, Kenyan serial formatting, and buyer privacy masking).
 - [x] **Milestone 17:** Vehicle Total Cost of Ownership (TCO) & Spend Analytics (`GET /api/v1/vehicles/:id/analytics` with MongoDB aggregation pipelines, proportional cost allocation across multi-category invoices, running cost per kilometer KES/km, and ranked expense breakdown).
+- [x] **Milestone 18:** Service Record Receipt Attachment & Tier 2 Upgrade Engine (`PATCH /api/v1/services/:id/receipt` allowing owners to attach job card / receipt photos, dynamically upgrading records from Tier 1 Self to Tier 2 Documented).
 
 
