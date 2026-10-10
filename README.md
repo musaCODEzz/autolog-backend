@@ -293,18 +293,20 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (66/66 Tests Passing)
+### Test Coverage Summary (81/81 Tests Passing - 100% Green)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual-mode login, commercial isolation, Zod error mapping |
-| **Vehicle Passport** | `tests/vehicle.test.ts` | 11 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport & health badges |
+| **Vehicle Passport** | `tests/vehicle.test.ts` | 15 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport, health badges, handover certificates |
 | **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic token, owner isolation, anti-rollback (400), dynamic burn rate recalibration |
 | **Weekly Dispatcher**| `tests/dispatcher.test.ts`| 5 | Stale vehicle detection, anti-spam idempotency, admin on-demand trigger, role defense |
-| **Service Engine** | `tests/service.test.ts` | 5 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag |
+| **Service Engine** | `tests/service.test.ts` | 7 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag, receipt upgrade |
 | **RFQ Engine** | `tests/rfq.test.ts` | 8 | Part request creation, blind dealer feed, 48h price lock, duplicate quote prevention, winning quote acceptance |
 | **Admin Operations**| `tests/admin.test.ts` | 8 | Platform metrics, RBAC unauthorized/forbidden blocks, garage partner verification, user suspension/ban |
 | **Predictive Engine**| `tests/predictions.test.ts` | 7 | Dynamic service intervals, overdue/due soon sorting, cambelt replacement threshold, burn rate estimations |
+| **Handover Certificate** | `tests/certificate.test.ts` | 4 | Deterministic SHA-256 fingerprint, serial generation (`AL-KE-YYYY-...`), privacy masking for public buyers |
+| **TCO Analytics** | `tests/analytics.test.ts` | 5 | Proportional cost allocation across multi-category records, KES/km calculation, zero-spend baseline |
 
 ---
 
@@ -343,7 +345,7 @@ Every pull request and push to the `main` branch automatically triggers our cont
 1. **Matrix Quality Gate (Node 20.x & 22.x):**
    - Clean install (`npm ci`)
    - Static type-checking (`npx tsc --noEmit`)
-   - Automated test suite execution (`npm test` — 66 in-memory tests)
+   - Automated test suite execution (`npm test` — 81 in-memory tests)
    - Production TypeScript compilation (`npm run build`)
 2. **Docker Build Gate:**
    - Multi-stage Docker container build verification (`docker build`) to guarantee deployment artifacts never break.

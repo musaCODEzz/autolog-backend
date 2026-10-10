@@ -205,7 +205,7 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - Matrix quality gates across Node.js 20.x and 22.x on Ubuntu 24.04 LTS:
   - `npm ci`
   - `npx tsc --noEmit`
-  - `npm test` (66 tests)
+  - `npm test` (81 tests across 11 suites)
   - `npm run build`
   - Multi-stage Docker container build verification check.
 

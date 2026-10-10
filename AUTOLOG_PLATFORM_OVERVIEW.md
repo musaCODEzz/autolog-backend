@@ -380,7 +380,35 @@ The platform includes comprehensive defense-in-depth mechanisms:
 
 ---
 
-### 5. Spare Parts RFQ Endpoints (`/api/v1/rfq`)
+### 5. Official Handover Certificate Endpoints (`/api/v1/vehicles/:id/certificate`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/vehicles/:id/certificate` | Generate unmasked handover certificate with SHA-256 hash | Private (Owner/Admin) |
+| `GET` | `/api/v1/vehicles/passport/:slug/certificate` | Public digital handover certificate with masked plate & chassis | Public (No Auth) |
+
+---
+
+### 6. Total Cost of Ownership (TCO) & Analytics (`/api/v1/vehicles/:id/analytics`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/vehicles/:id/analytics` | TCO spend breakdown, running cost per km (KES/km), monthly average | Private (Owner/Admin) |
+
+---
+
+### 7. Service Record Endpoints (`/api/v1/services`)
+
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/services` | Log new maintenance record (Tier 1, 2, or 3) | Private (Owner/Garage) |
+| `GET` | `/api/v1/services/vehicle/:vehicleId` | Retrieve full service history for vehicle | Private (Owner/Garage) |
+| `GET` | `/api/v1/services/:id` | Get single service record details | Private |
+| `PATCH`| `/api/v1/services/:id/receipt` | Attach receipt photo URL and upgrade from Tier 1 to Tier 2 | Private (Owner/Logger/Admin) |
+
+---
+
+### 8. Spare Parts RFQ Endpoints (`/api/v1/rfq`)
 
 | Method | Endpoint | Description | Access |
 | :--- | :--- | :--- | :--- |
@@ -394,26 +422,28 @@ The platform includes comprehensive defense-in-depth mechanisms:
 
 ## Testing & Quality Assurance Summary
 
-The platform is fortified by **66 automated integration tests** executing against an isolated in-memory MongoDB cluster. Zero cloud databases are polluted during test runs.
+The platform is fortified by **81 automated integration tests** executing against an isolated in-memory MongoDB cluster across **11 dedicated test suites**. Zero cloud databases are polluted during test runs.
 
 ```bash
 # Execute entire test suite sequentially with zero port collisions
 npm test
 ```
 
-### Verified Test Matrix (66/66 Passing - 100% Green)
+### Verified Test Matrix (81/81 Passing - 100% Green)
 
 | Test Suite | File | Tests | Key Invariants Verified |
 | :--- | :--- | :--- | :--- |
 | **System Health** | `tests/health.test.ts` | 3 | API liveness, uptime tracker, Swagger docs endpoint. |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual login, password hashing, commercial isolation. |
-| **Vehicle Passport**| `tests/vehicle.test.ts` | 11 | NTSA plate regex, duplicate plate rejection, anti-rollback, public slug generator, predictive health badges. |
+| **Vehicle Passport**| `tests/vehicle.test.ts` | 15 | NTSA plate regex, duplicate rejection, anti-rollback, public slug passport, health badges, certificate generation. |
 | **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic tokens, owner authorization, rollback rejection (400), dynamic burn rate recalibration. |
 | **Weekly Dispatcher** | `tests/dispatcher.test.ts` | 5 | Cron schedule, stale vehicle discovery, anti-spam idempotency guard (`lastCheckinPromptSentAt`). |
-| **Service Engine** | `tests/service.test.ts` | 5 | Tier 1/2/3 stamps, auto-odometer progression, 30-day backdating fraud detection. |
+| **Service Engine** | `tests/service.test.ts` | 7 | Tier 1/2/3 stamps, auto-odometer progression, 30-day backdating fraud detection, receipt upgrade to Tier 2. |
 | **Spare Parts RFQ** | `tests/rfq.test.ts` | 8 | Fitment extraction, blind dealer feed, 48h price locks, atomic winning quote acceptance. |
 | **Admin Operations**| `tests/admin.test.ts` | 8 | Partner accreditation, live token suspension revocation, platform aggregate analytics. |
 | **Predictive Engine**| `tests/predictions.test.ts` | 7 | Kenyan service intervals, service history mapping, overdue urgency sorting, high-mileage cambelt advisory. |
+| **Handover Certificate** | `tests/certificate.test.ts` | 4 | Deterministic SHA-256 fingerprint, serial generation (`AL-KE-YYYY-...`), privacy masking for public buyers. |
+| **TCO Analytics** | `tests/analytics.test.ts` | 5 | Proportional cost allocation across multi-category records, KES/km calculation, zero-spend baseline. |
 
 ---
 

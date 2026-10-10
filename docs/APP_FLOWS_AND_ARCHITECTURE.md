@@ -128,6 +128,13 @@ flowchart TD
     class FlagBackdated red;
 ```
 
+### 3.1 Asynchronous Receipt Attachment & Tier 2 Upgrade Loop (`PATCH /services/:id/receipt`)
+When a motorist logs a roadside maintenance record in a hurry, it enters the ledger as `TIER_1_SELF` (Gray Badge). Once at home or upon finding the physical paper invoice:
+1. Owner/logger calls `PATCH /api/v1/services/:id/receipt` with `{ receiptUrl: "https://..." }`.
+2. Multi-tenant access guard ensures only the vehicle owner, recording garage, or admin can modify the record.
+3. If current status is `TIER_1_SELF`, it automatically upgrades to `TIER_2_DOCUMENTED` (Amber Badge).
+4. If already `TIER_3_PARTNER`, the high-trust partner status is preserved while storing the receipt photo URL.
+
 ---
 
 ## 4. Journey 3: Kirinyaga Road Spare Parts RFQ Blind-Bidding
