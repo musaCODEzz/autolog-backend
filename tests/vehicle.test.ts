@@ -310,6 +310,33 @@ describe('🚗 Vehicle Digital Passport Module', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('not found');
     });
+
+    it('🖨️ should render print-ready HTML certificate for vehicle owner at GET /:id/certificate/print', async () => {
+      const res = await request(app)
+        .get(`/api/v1/vehicles/${vehicleId}/certificate/print`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toContain('text/html');
+      expect(res.text).toContain('<!DOCTYPE html>');
+      expect(res.text).toContain('KDD 842P');
+      expect(res.text).toContain('AutoLog Kenya');
+      expect(res.text).toContain('@media print');
+      expect(res.text).toContain('PASSED &amp; MONOTONIC');
+    });
+
+    it('🖨️ should render public print-ready HTML certificate with masked plate at GET /passport/:slug/certificate/print', async () => {
+      const res = await request(app).get(
+        `/api/v1/vehicles/passport/${passportSlug}/certificate/print`
+      );
+
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toContain('text/html');
+      expect(res.text).toContain('<!DOCTYPE html>');
+      expect(res.text).toContain('KD* ***P');
+      expect(res.text).not.toContain('KDD 842P');
+      expect(res.text).toContain('AutoLog Kenya');
+    });
   });
 });
 

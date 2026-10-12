@@ -17,6 +17,7 @@ import {
     mapServiceRecordsToRuleHistory,
 } from '../utils/predictions';
 import { generateVehicleCertificate } from '../utils/certificate';
+import { renderCertificateHtml } from '../utils/certificateTemplate';
 /**
  * @desc Register new vehicle to digital passport
  * @route POST /api/v1/vehicles
@@ -466,6 +467,75 @@ export const getPublicPassportCertificate = async (
       success: true,
       data: { certificate },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Print-Ready Official Vehicle Handover Certificate (HTML)
+ * @route   GET /api/v1/vehicles/:id/certificate/print
+ * @access  Private (Owner or Admin)
+ */
+export const getVehicleCertificateHtml = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const isOwnerOrAdmin =
+      req.user?.role === 'admin'
+        ? { _id: req.params.id }
+        : { _id: req.params.id, owner: req.user!._id };
+
+    const vehicle = await Vehicle.findOne(isOwnerOrAdmin);
+
+    if (!vehicle) {
+      res.status(404).send('<h1>404 Not Found</h1><p>Vehicle not found or you do not have permission to view its certificate.</p>');
+      return;
+    }
+
+    const serviceRecords = await ServiceRecord.find({ vehicle: vehicle._id })
+      .select('serviceType mileageAtService serviceDate verificationTier isBackdated garageName partsReplaced description')
+      .sort({ mileageAtService: -1, serviceDate: -1 });
+
+    const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, false);
+    const html = renderCertificateHtml(certificate);
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.status(200).send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Print-Ready Public Vehicle Handover Certificate (HTML with Masked Privacy)
+ * @route   GET /api/v1/vehicles/passport/:slug/certificate/print
+ * @access  Public
+ */
+export const getPublicPassportCertificateHtml = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const vehicle = await Vehicle.findOne({ passportSlug: req.params.slug });
+
+    if (!vehicle) {
+      res.status(404).send('<h1>404 Not Found</h1><p>Vehicle passport not found.</p>');
+      return;
+    }
+
+    const serviceRecords = await ServiceRecord.find({ vehicle: vehicle._id })
+      .select('serviceType mileageAtService serviceDate verificationTier isBackdated garageName partsReplaced description')
+      .sort({ mileageAtService: -1, serviceDate: -1 });
+
+    const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, true);
+    const html = renderCertificateHtml(certificate);
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.status(200).send(html);
   } catch (error) {
     next(error);
   }

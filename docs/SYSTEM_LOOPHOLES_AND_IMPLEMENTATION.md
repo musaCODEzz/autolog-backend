@@ -58,7 +58,7 @@ gantt
     Milestone 1-5 (Core Express, Security, DB, Swagger) :done, 2026-08-01, 2026-08-15
     Milestone 6-10 (Auth, Passports, Services, RFQ, Admin) :done, 2026-08-16, 2026-09-10
     Milestone 11-13 (Docker, Vitest, CI/CD, Magic Check-in) :done, 2026-09-11, 2026-09-30
-    Milestone 14-18 (Predictions, Certificates, TCO Analytics, Receipt Upgrade) :done, 2026-10-01, 2026-10-10
+    Milestone 14-19 (Predictions, Certificates, TCO Analytics, Receipt Upgrade, Print HTML Engine) :done, 2026-10-01, 2026-10-12
     section Next Phase (Q4 2026 / Q1 2027)
     M-Pesa Daraja STK Push Integration for Quote Deposits :active, 2026-10-15, 2026-11-05
     WhatsApp Cloud API Official Webhook Bot : 2026-11-06, 2026-11-25

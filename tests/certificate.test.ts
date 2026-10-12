@@ -6,6 +6,7 @@ import {
   ICertificateVehicleInput,
   ICertificateServiceRecordInput,
 } from '../src/utils/certificate';
+import { renderCertificateHtml } from '../src/utils/certificateTemplate';
 
 describe('📜 Vehicle Handover Certificate Engine (src/utils/certificate.ts)', () => {
   const mockVehicle: ICertificateVehicleInput = {
@@ -97,5 +98,18 @@ describe('📜 Vehicle Handover Certificate Engine (src/utils/certificate.ts)', 
     expect(certPublic.vehicle.plateNumber).toBe('KD* ***A');
     expect(certPublic.vehicle.chassisNumber).not.toBe('ZRT260-1234567');
     expect(certPublic.vehicle.chassisNumber).toContain('...4567');
+  });
+
+  it('🖨️ should render print-ready HTML certificate with security styling and correct serial', () => {
+    const certificate = generateVehicleCertificate(mockVehicle, mockRecords, false);
+    const html = renderCertificateHtml(certificate);
+
+    expect(html).toContain('<!DOCTYPE html>');
+    expect(html).toContain(certificate.certificateNumber);
+    expect(html).toContain(certificate.verificationHash);
+    expect(html).toContain('KDA 123A');
+    expect(html).toContain('PASSED &amp; MONOTONIC');
+    expect(html).toContain('AutoLog Kenya');
+    expect(html).toContain('@media print');
   });
 });

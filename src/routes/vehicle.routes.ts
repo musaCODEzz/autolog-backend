@@ -9,6 +9,8 @@ import {
   getVehiclePredictions,
   getVehicleCertificate,
   getPublicPassportCertificate,
+  getVehicleCertificateHtml,
+  getPublicPassportCertificateHtml,
 } from '../controllers/vehicle.controller';
 import { protect, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -90,6 +92,33 @@ router.get('/passport/:slug', getPublicPassport);
  *         description: Vehicle passport not found
  */
 router.get('/passport/:slug/certificate', getPublicPassportCertificate);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/passport/{slug}/certificate/print:
+ *   get:
+ *     summary: Print-Ready Public Vehicle Handover Certificate (HTML)
+ *     description: Renders a printable, security-styled HTML certificate for browser print and PDF export with masked plate and chassis for public buyers.
+ *     tags: [Vehicles]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unique vehicle passport slug
+ *         example: mazda-cx5-z8lsgs
+ *     responses:
+ *       200:
+ *         description: Rendered HTML certificate
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *       404:
+ *         description: Vehicle passport not found
+ */
+router.get('/passport/:slug/certificate/print', getPublicPassportCertificateHtml);
 
 // ==========================================
 // 📲 ONE-CLICK CHECK-IN (Token Governed)
@@ -384,6 +413,36 @@ router.get('/:id/predictions', protect, getVehiclePredictions);
  *         description: Vehicle not found or not owned by user
  */
 router.get('/:id/certificate', protect, getVehicleCertificate);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/{id}/certificate/print:
+ *   get:
+ *     summary: Print-Ready Official Vehicle Handover Certificate (HTML)
+ *     description: Renders an official, printable security-styled HTML handover certificate with unmasked plate and chassis number for bank financing, SACCO registration, and vehicle ownership transfer.
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB Vehicle ID
+ *     responses:
+ *       200:
+ *         description: Rendered HTML certificate
+ *         content:
+ *           text/html:
+ *             schema:
+ *               type: string
+ *       401:
+ *         description: Unauthorized (Token required)
+ *       404:
+ *         description: Vehicle not found or not owned by user
+ */
+router.get('/:id/certificate/print', protect, getVehicleCertificateHtml);
 
 /**
  * @openapi
