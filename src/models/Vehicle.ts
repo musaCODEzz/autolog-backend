@@ -15,6 +15,16 @@ export interface ICertificateIssuanceRecord {
   tier3CountAtIssuance: number;
 }
 
+export interface IOwnershipTransferRecord {
+  previousOwner: Types.ObjectId;
+  newOwner: Types.ObjectId;
+  transferredAt: Date;
+  mileageAtTransfer: number;
+  agreedSalePriceKes?: number;
+  certificateNumber?: string;
+  notes?: string;
+}
+
 export interface IVehicle {
   owner: Types.ObjectId;
   plateNumber: string;
@@ -35,6 +45,7 @@ export interface IVehicle {
   status: VehicleStatus;
   photos: string[];
   latestCertificate?: ICertificateIssuanceRecord;
+  ownershipHistory: IOwnershipTransferRecord[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -156,6 +167,17 @@ const vehicleSchema = new Schema<IVehicle>(
       totalServicesAtIssuance: { type: Number },
       tier3CountAtIssuance: { type: Number },
     },
+    ownershipHistory: [
+      {
+        previousOwner: { type: Schema.Types.ObjectId, ref: 'User' },
+        newOwner: { type: Schema.Types.ObjectId, ref: 'User' },
+        transferredAt: { type: Date, default: Date.now },
+        mileageAtTransfer: { type: Number },
+        agreedSalePriceKes: { type: Number },
+        certificateNumber: { type: String },
+        notes: { type: String },
+      },
+    ],
   },
   {
     timestamps: true,

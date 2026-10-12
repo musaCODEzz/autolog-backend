@@ -12,6 +12,7 @@ import {
   getVehicleCertificateHtml,
   getPublicPassportCertificateHtml,
   verifyCertificate,
+  transferVehicleOwnership,
 } from '../controllers/vehicle.controller';
 import { protect, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -20,6 +21,7 @@ import {
   updateMileageSchema,
   updateVehicleSchema,
   verifyCertificateSchema,
+  transferVehicleSchema,
 } from '../validators/vehicle.validator';
 import {
   generateVehicleCheckinToken,
@@ -351,6 +353,7 @@ router.post('/', protect, validate(createVehicleSchema), createVehicle);
  *         description: Unauthorized
  */
 router.get('/', protect, getMyVehicles);
+router.get('/my', protect, getMyVehicles);
 
 /**
  * @openapi
@@ -484,6 +487,58 @@ router.get('/:id/certificate', protect, getVehicleCertificate);
  *         description: Vehicle not found or not owned by user
  */
 router.get('/:id/certificate/print', protect, getVehicleCertificateHtml);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/{id}/transfer:
+ *   post:
+ *     summary: Transfer Vehicle Ownership to Another Motorist
+ *     description: Transfers vehicle passport ownership to a newly registered buyer identified by Kenyan phone (+254...) or email, archiving a final Handover Certificate and logging transfer history.
+ *     tags: [Vehicles]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB Vehicle ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               recipientPhone:
+ *                 type: string
+ *                 example: "+254712345678"
+ *               recipientEmail:
+ *                 type: string
+ *                 example: "buyer@gmail.com"
+ *               agreedSalePriceKes:
+ *                 type: number
+ *                 example: 1250000
+ *               notes:
+ *                 type: string
+ *                 example: "Sold via Jiji. Inspection completed."
+ *     responses:
+ *       200:
+ *         description: Vehicle ownership successfully transferred
+ *       400:
+ *         description: Cannot transfer to self or validation error
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Vehicle or recipient not found
+ */
+router.post(
+  '/:id/transfer',
+  protect,
+  validate(transferVehicleSchema),
+  transferVehicleOwnership
+);
 
 /**
  * @openapi

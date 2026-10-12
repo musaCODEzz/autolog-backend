@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isValidKenyanPlate } from '../utils/plate';
+import { formatKenyanPhone, isValidKenyanPhone } from '../utils/phone';
 
 /**
  * Enums matching the vehicle model
@@ -164,3 +165,39 @@ export const verifyCertificateSchema = z
   );
 
 export type VerifyCertificateInput = z.infer<typeof verifyCertificateSchema>;
+
+/**
+ * Schema: Transfer Vehicle Ownership
+ */
+export const transferVehicleSchema = z
+  .object({
+    recipientPhone: z
+      .string()
+      .trim()
+      .refine((val) => isValidKenyanPhone(val), {
+        message: 'Please provide a valid Kenyan phone number (e.g. 0712345678 or +254712345678)',
+      })
+      .transform((val) => formatKenyanPhone(val))
+      .optional(),
+    recipientEmail: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email('Invalid recipient email format')
+      .optional(),
+    agreedSalePriceKes: z
+      .number()
+      .int('Agreed price must be a whole number')
+      .min(0, 'Sale price cannot be negative')
+      .optional(),
+    notes: z.string().trim().max(500, 'Notes cannot exceed 500 characters').optional(),
+  })
+  .refine(
+    (data) => Boolean(data.recipientPhone || data.recipientEmail),
+    {
+      message: 'Please provide either recipientPhone or recipientEmail to identify the new owner',
+      path: ['recipientPhone'],
+    }
+  );
+
+export type TransferVehicleInput = z.infer<typeof transferVehicleSchema>;

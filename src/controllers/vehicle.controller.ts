@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { User } from '../models/User';
 import { Vehicle } from '../models/Vehicle';
 import { ServiceRecord } from '../models/ServiceRecord';
 import { AuthRequest } from '../middlewares/auth.middleware';
@@ -651,4 +652,109 @@ export const verifyCertificate = async (
     next(error);
   }
 };
+
+/**
+ * @desc    Transfer Vehicle Ownership to Another Registered Motorist
+ * @route   POST /api/v1/vehicles/:id/transfer
+ * @access  Private (Current Owner only)
+ */
+export const transferVehicleOwnership = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { recipientPhone, recipientEmail, agreedSalePriceKes, notes } = req.body;
+
+    // 1. Verify caller owns this vehicle
+    const vehicle = await Vehicle.findOne({
+      _id: req.params.id,
+      owner: req.user!._id,
+    });
+
+    if (!vehicle) {
+      res.status(404).json({
+        success: false,
+        message: 'Vehicle not found or you do not have permission to transfer it',
+      });
+      return;
+    }
+
+    // 2. Locate recipient user
+    const recipientQuery: any = {};
+    if (recipientPhone) {
+      recipientQuery.phone = recipientPhone;
+    } else if (recipientEmail) {
+      recipientQuery.email = recipientEmail;
+    }
+
+    const recipient = await User.findOne(recipientQuery);
+
+    if (!recipient) {
+      res.status(404).json({
+        success: false,
+        message: 'Recipient account not found on AutoLog KE. Please ask the new owner to register first.',
+      });
+      return;
+    }
+
+    // 3. Prevent transferring vehicle to self
+    if (recipient._id.equals(req.user!._id)) {
+      res.status(400).json({
+        success: false,
+        message: 'Cannot transfer vehicle ownership to yourself',
+      });
+      return;
+    }
+
+    // 4. Generate final Handover Certificate snapshot commemorating the transfer
+    const serviceRecords = await ServiceRecord.find({ vehicle: vehicle._id })
+      .select('serviceType mileageAtService serviceDate verificationTier isBackdated garageName partsReplaced description')
+      .sort({ mileageAtService: -1, serviceDate: -1 });
+
+    const handoverCertificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, false);
+    await persistLatestCertificate(vehicle, handoverCertificate);
+
+    // 5. Record ownership transfer in history array
+    vehicle.ownershipHistory.push({
+      previousOwner: req.user!._id,
+      newOwner: recipient._id,
+      transferredAt: new Date(),
+      mileageAtTransfer: vehicle.currentMileage,
+      agreedSalePriceKes,
+      certificateNumber: handoverCertificate.certificateNumber,
+      notes,
+    });
+
+    // 6. Update owner pointer
+    const previousOwnerName = req.user!.name;
+    vehicle.owner = recipient._id;
+    await vehicle.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Vehicle ownership successfully transferred to ${recipient.name} (${recipient.phone})`,
+      data: {
+        vehicleId: vehicle._id,
+        plateNumber: vehicle.plateNumber,
+        previousOwner: {
+          id: req.user!._id,
+          name: previousOwnerName,
+        },
+        newOwner: {
+          id: recipient._id,
+          name: recipient.name,
+          phone: recipient.phone,
+          email: recipient.email,
+        },
+        transferredAt: new Date(),
+        mileageAtTransfer: vehicle.currentMileage,
+        handoverCertificate,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 

@@ -22,6 +22,7 @@ This document provides a **deep-dive architectural analysis of every automotive 
 | **12** | **Driver Notification Fatigue & Spam** | Frequent automated check-in messages annoy drivers, causing them to block the service. | **Anti-Spam Idempotency Guard:** Scans enforce `lastCheckinPromptSentAt <= 7 days ago`. Drivers are mathematically prevented from receiving more than one check-in prompt per week. |
 | **13** | **Multi-Category Invoice Double Counting** | Combined invoices (e.g. Brakes + Suspension for KES 22,500) cause MongoDB `$unwind` to count 22,500 twice, inflating total expenses to 175%. | **Proportional Cost Allocation Engine:** In `analytics.controller.ts`, `$addFields` divides `costKes` by `{ $size: '$serviceType' }` before unwinding. Category expenses and percentages now sum up to exactly 100%. |
 | **14** | **Handover Certificate PDF Forgery** | Dishonest sellers fabricate a printed PDF handover certificate claiming genuine service history. | **Deterministic SHA-256 Fingerprinting:** Certificates carry a 64-character hash combining plate, current mileage, total service count, tier 3 partner count, and issuance timestamp. Any altered mileage or fabricated log invalidates the hash when checked against `autolog.ke/passport/:slug/certificate`. |
+| **15** | **Illegitimate Ownership Claim & History Wiping** | Car is sold on the informal used car market, causing disputes, or seller attempts to wipe previous logs. | **Verified Ownership Handover Engine:** Transfer requires recipient to exist on AutoLog KE via phone/email. Prevents self-transfers (`400`), atomically generates an archival certificate snapshot at point of sale, appends an immutable transfer log to `ownershipHistory`, and seamlessly re-assigns ownership while preserving full historical provenance. |
 
 ---
 
@@ -58,7 +59,7 @@ gantt
     Milestone 1-5 (Core Express, Security, DB, Swagger) :done, 2026-08-01, 2026-08-15
     Milestone 6-10 (Auth, Passports, Services, RFQ, Admin) :done, 2026-08-16, 2026-09-10
     Milestone 11-13 (Docker, Vitest, CI/CD, Magic Check-in) :done, 2026-09-11, 2026-09-30
-    Milestone 14-20 (Predictions, Certificates, TCO Analytics, Receipt Upgrade, Print HTML, Verification Engine) :done, 2026-10-01, 2026-10-12
+    Milestone 14-21 (Predictions, Certificates, TCO Analytics, Receipt Upgrade, Print HTML, Verification, Ownership Transfer) :done, 2026-10-01, 2026-10-12
     section Next Phase (Q4 2026 / Q1 2027)
     M-Pesa Daraja STK Push Integration for Quote Deposits :active, 2026-10-15, 2026-11-05
     WhatsApp Cloud API Official Webhook Bot : 2026-11-06, 2026-11-25

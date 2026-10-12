@@ -418,6 +418,88 @@ describe('🚗 Vehicle Digital Passport Module', () => {
         expect(verifyRes.body.data.issuedMileage).toBeLessThan(89000);
       });
     });
+
+    describe('🤝 POST /api/v1/vehicles/:id/transfer (Vehicle Ownership Handover)', () => {
+      let buyerToken: string;
+      const buyerPhone = '+254719887766';
+      const buyerEmail = 'sarah.buyer@autolog.ke';
+
+      beforeAll(async () => {
+        const buyerRes = await request(app).post('/api/v1/auth/register').send({
+          name: 'Sarah Wanjiku',
+          email: buyerEmail,
+          phone: buyerPhone,
+          password: 'Password123!',
+          role: 'owner',
+        });
+        buyerToken = buyerRes.body.data.token;
+      });
+
+      it('🔒 should reject unauthenticated transfer requests with 401', async () => {
+        const res = await request(app)
+          .post(`/api/v1/vehicles/${vehicleId}/transfer`)
+          .send({ recipientPhone: buyerPhone });
+
+        expect(res.status).toBe(401);
+      });
+
+      it('❌ should reject transfer if caller attempts to transfer to themselves with 400', async () => {
+        const meRes = await request(app)
+          .get('/api/v1/auth/me')
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        const res = await request(app)
+          .post(`/api/v1/vehicles/${vehicleId}/transfer`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ recipientPhone: meRes.body.data.user.phone });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toContain('Cannot transfer vehicle ownership to yourself');
+      });
+
+      it('🔍 should return 404 if recipient is not registered on AutoLog KE', async () => {
+        const res = await request(app)
+          .post(`/api/v1/vehicles/${vehicleId}/transfer`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ recipientPhone: '+254700000000' });
+
+        expect(res.status).toBe(404);
+        expect(res.body.message).toContain('Recipient account not found');
+      });
+
+      it('🤝 should successfully transfer vehicle ownership, archive certificate, and update permissions', async () => {
+        const res = await request(app)
+          .post(`/api/v1/vehicles/${vehicleId}/transfer`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({
+            recipientPhone: buyerPhone,
+            agreedSalePriceKes: 1450000,
+            notes: 'Private sale agreed in Westlands. All paperwork inspected.',
+          });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.newOwner.phone).toBe(buyerPhone);
+        expect(res.body.data.newOwner.name).toBe('Sarah Wanjiku');
+        expect(res.body.data.handoverCertificate).toBeDefined();
+        expect(res.body.data.handoverCertificate.certificateNumber).toMatch(/^AL-KE-/);
+
+        // Previous owner should no longer be able to update mileage
+        const oldOwnerPatch = await request(app)
+          .patch(`/api/v1/vehicles/${vehicleId}/mileage`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ currentMileage: 95000 });
+        expect(oldOwnerPatch.status).toBe(404);
+
+        // New owner can now fetch vehicle under /my
+        const newOwnerVehicles = await request(app)
+          .get('/api/v1/vehicles/my')
+          .set('Authorization', `Bearer ${buyerToken}`);
+        expect(newOwnerVehicles.status).toBe(200);
+        const ownedPlates = newOwnerVehicles.body.data.vehicles.map((v: any) => v.plateNumber);
+        expect(ownedPlates).toContain('KDD 842P');
+      });
+    });
   });
 });
 

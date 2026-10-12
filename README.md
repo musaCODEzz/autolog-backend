@@ -222,7 +222,13 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `PATCH` | `/api/v1/vehicles/:id` | Update vehicle profile specs/photos | Authenticated (Owner) |
 | `PATCH` | `/api/v1/vehicles/:id/mileage` | Update odometer (Rollback prevention) | Authenticated (Owner) |
 | `GET` | `/api/v1/vehicles/:id/predictions` | Predictive maintenance schedule & urgency alerts (Oil, ATF, timing belt) | Authenticated (Owner / Admin) |
+| `GET` | `/api/v1/vehicles/:id/analytics` | Total Cost of Ownership (TCO) & spend breakdown (KES/km, categories) | Authenticated (Owner) |
+| `GET` | `/api/v1/vehicles/:id/certificate` | Official Handover Certificate with SHA-256 tamper-evident hash | Authenticated (Owner) |
+| `GET` | `/api/v1/vehicles/:id/certificate/print` | Print-ready HTML Handover Certificate with official crest & print CSS | Authenticated (Owner) |
 | `GET` | `/api/v1/vehicles/passport/:slug` | Public sanitized passport with masked plate & predictive health badges | **Public** |
+| `GET` | `/api/v1/vehicles/passport/:slug/certificate/print` | Public print-ready HTML Certificate with masked identifiers | **Public** |
+| `POST` | `/api/v1/vehicles/certificate/verify` | Cryptographic verification endpoint for banks, lenders & buyers | **Public** |
+| `POST` | `/api/v1/vehicles/:id/transfer` | Vehicle ownership handover & transfer with immutable audit history | Authenticated (Owner) |
 
 ### Service History & Verification Engine (`/api/v1/services`)
 | Method | Endpoint | Description | Access |
@@ -278,12 +284,18 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 13: Automated Weekly Check-in Dispatcher** — Sunday 18:00 EAT cron daemon, anti-spam idempotency guard, and Admin on-demand batch trigger.
 - [x] **Milestone 14: Smart Predictive Maintenance REST API** — Dynamic Kenyan service interval calculator, MongoDB service history mapping, urgency sorting (OVERDUE / DUE_SOON / HEALTHY), and cambelt replacement advisories.
 - [x] **Milestone 15: Public Vehicle Digital Passport with Predictive Health Badges** — Attaches real-time predictive maintenance health badges to the public digital passport for prospective car buyers and lenders with zero credential leaks.
+- [x] **Milestone 16: Official Digital Vehicle Passport & Handover Certificate** — Deterministic SHA-256 cryptographic verification fingerprint, Kenyan serial formatting (`AL-KE-YYYY-MAKE-HASH`), and buyer privacy masking.
+- [x] **Milestone 17: Vehicle Total Cost of Ownership (TCO) & Spend Analytics** — MongoDB aggregation pipelines, proportional multi-category invoice allocations, and running cost per km (KES/km).
+- [x] **Milestone 18: Service Record Receipt Attachment & Tier 2 Upgrade Engine** — Photo attachment and dynamic elevation from Tier 1 Self to Tier 2 Documented.
+- [x] **Milestone 19: Printable HTML Handover Certificate View & Export Engine** — Official AutoLog Kenya crest, serial badge, NTSA reflective plate styling, and print/PDF CSS `@media print` optimization.
+- [x] **Milestone 20: Cryptographic Certificate Verification Engine** — Anti-tamper verification endpoint for banks, lenders & buyers evaluating `VALID_AUTHENTIC`, `OUTDATED_SUPERSEDED`, `TAMPERED_INVALID`, and `NOT_FOUND`.
+- [x] **Milestone 21: Vehicle Ownership Handover & Transfer Engine** — Verified transfer to new Kenyan motorist via phone/email, atomic ownership re-assignment, archival certificate generation, and permanent immutable audit trail in `ownershipHistory`.
 
 ---
 
 ## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
 
-AutoLog KE features a comprehensive 66-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution (~38s), and complete offline testability.
+AutoLog KE features a comprehensive 93-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution, and complete offline testability.
 
 ```bash
 # Run full automated test suite once
@@ -293,12 +305,12 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (89/89 Tests Passing - 100% Green)
+### Test Coverage Summary (93/93 Tests Passing - 100% Green)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual-mode login, commercial isolation, Zod error mapping |
-| **Vehicle Passport** | `tests/vehicle.test.ts` | 22 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport, health badges, handover certificates, HTML print views, cryptographic verification |
+| **Vehicle Passport** | `tests/vehicle.test.ts` | 26 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport, health badges, handover certificates, HTML print views, cryptographic verification (4 states), ownership transfer |
 | **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic token, owner isolation, anti-rollback (400), dynamic burn rate recalibration |
 | **Weekly Dispatcher**| `tests/dispatcher.test.ts`| 5 | Stale vehicle detection, anti-spam idempotency, admin on-demand trigger, role defense |
 | **Service Engine** | `tests/service.test.ts` | 7 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag, receipt upgrade |
@@ -345,7 +357,7 @@ Every pull request and push to the `main` branch automatically triggers our cont
 1. **Matrix Quality Gate (Node 20.x & 22.x):**
    - Clean install (`npm ci`)
    - Static type-checking (`npx tsc --noEmit`)
-   - Automated test suite execution (`npm test` — 89 in-memory tests)
+   - Automated test suite execution (`npm test` — 93 in-memory tests)
    - Production TypeScript compilation (`npm run build`)
 2. **Docker Build Gate:**
    - Multi-stage Docker container build verification (`docker build`) to guarantee deployment artifacts never break.
