@@ -293,12 +293,12 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (84/84 Tests Passing - 100% Green)
+### Test Coverage Summary (89/89 Tests Passing - 100% Green)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual-mode login, commercial isolation, Zod error mapping |
-| **Vehicle Passport** | `tests/vehicle.test.ts` | 17 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport, health badges, handover certificates, HTML print views |
+| **Vehicle Passport** | `tests/vehicle.test.ts` | 22 | NTSA plate format, duplicate prevention (409), odometer anti-rollback, public slug passport, health badges, handover certificates, HTML print views, cryptographic verification |
 | **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic token, owner isolation, anti-rollback (400), dynamic burn rate recalibration |
 | **Weekly Dispatcher**| `tests/dispatcher.test.ts`| 5 | Stale vehicle detection, anti-spam idempotency, admin on-demand trigger, role defense |
 | **Service Engine** | `tests/service.test.ts` | 7 | Tier 1 (Self), Tier 2 (Documented), Tier 3 (Partner Verified), auto-odometer progression, backdating flag, receipt upgrade |
@@ -345,7 +345,7 @@ Every pull request and push to the `main` branch automatically triggers our cont
 1. **Matrix Quality Gate (Node 20.x & 22.x):**
    - Clean install (`npm ci`)
    - Static type-checking (`npx tsc --noEmit`)
-   - Automated test suite execution (`npm test` — 84 in-memory tests)
+   - Automated test suite execution (`npm test` — 89 in-memory tests)
    - Production TypeScript compilation (`npm run build`)
 2. **Docker Build Gate:**
    - Multi-stage Docker container build verification (`docker build`) to guarantee deployment artifacts never break.

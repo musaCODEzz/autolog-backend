@@ -337,6 +337,87 @@ describe('🚗 Vehicle Digital Passport Module', () => {
       expect(res.text).not.toContain('KDD 842P');
       expect(res.text).toContain('AutoLog Kenya');
     });
+
+    describe('🔍 POST /api/v1/vehicles/certificate/verify (Cryptographic Anti-Tamper Verification)', () => {
+      it('❌ should reject verify request with missing hash or identifiers with 400', async () => {
+        const res = await request(app)
+          .post('/api/v1/vehicles/certificate/verify')
+          .send({ verificationHash: '123' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+      });
+
+      it('🔍 should return 404 NOT_FOUND for unknown certificate serial', async () => {
+        const res = await request(app)
+          .post('/api/v1/vehicles/certificate/verify')
+          .send({
+            certificateNumber: 'AL-KE-2026-UNKNOWN-9999',
+            verificationHash: 'a'.repeat(64),
+          });
+
+        expect(res.status).toBe(404);
+        expect(res.body.data.verificationStatus).toBe('NOT_FOUND');
+      });
+
+      it('🟢 should return VALID_AUTHENTIC for exact cryptographic match on up-to-date vehicle', async () => {
+        const certRes = await request(app)
+          .get(`/api/v1/vehicles/${vehicleId}/certificate`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        const { certificateNumber, verificationHash } = certRes.body.data.certificate;
+
+        const verifyRes = await request(app)
+          .post('/api/v1/vehicles/certificate/verify')
+          .send({ certificateNumber, verificationHash });
+
+        expect(verifyRes.status).toBe(200);
+        expect(verifyRes.body.data.verificationStatus).toBe('VALID_AUTHENTIC');
+        expect(verifyRes.body.data.isAuthentic).toBe(true);
+        expect(verifyRes.body.data.verifiedMileage).toBeGreaterThanOrEqual(75000);
+      });
+
+      it('🔴 should return TAMPERED_INVALID if hash has been altered or forged', async () => {
+        const certRes = await request(app)
+          .get(`/api/v1/vehicles/${vehicleId}/certificate`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        const { certificateNumber } = certRes.body.data.certificate;
+        const fakeHash = 'f'.repeat(64);
+
+        const verifyRes = await request(app)
+          .post('/api/v1/vehicles/certificate/verify')
+          .send({ certificateNumber, verificationHash: fakeHash });
+
+        expect(verifyRes.status).toBe(200);
+        expect(verifyRes.body.data.verificationStatus).toBe('TAMPERED_INVALID');
+        expect(verifyRes.body.data.isAuthentic).toBe(false);
+        expect(verifyRes.body.data.message).toContain('altered or forged');
+      });
+
+      it('🟡 should return OUTDATED_SUPERSEDED if mileage has progressed since certificate was issued', async () => {
+        const certRes = await request(app)
+          .get(`/api/v1/vehicles/${vehicleId}/certificate`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        const { certificateNumber, verificationHash } = certRes.body.data.certificate;
+
+        await request(app)
+          .patch(`/api/v1/vehicles/${vehicleId}/mileage`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ currentMileage: 89000 });
+
+        const verifyRes = await request(app)
+          .post('/api/v1/vehicles/certificate/verify')
+          .send({ certificateNumber, verificationHash });
+
+        expect(verifyRes.status).toBe(200);
+        expect(verifyRes.body.data.verificationStatus).toBe('OUTDATED_SUPERSEDED');
+        expect(verifyRes.body.data.isAuthentic).toBe(true);
+        expect(verifyRes.body.data.currentMileage).toBe(89000);
+        expect(verifyRes.body.data.issuedMileage).toBeLessThan(89000);
+      });
+    });
   });
 });
 

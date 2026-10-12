@@ -137,3 +137,30 @@ export const updateVehicleSchema = z.object({
 export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;
 export type UpdateMileageInput = z.infer<typeof updateMileageSchema>;
 export type UpdateVehicleInput = z.infer<typeof updateVehicleSchema>;
+
+/**
+ * Schema: Verify Cryptographic Vehicle Handover Certificate
+ */
+export const verifyCertificateSchema = z
+  .object({
+    certificateNumber: z.string().trim().optional(),
+    passportSlug: z.string().trim().optional(),
+    verificationHash: z
+      .string({
+        error: (issue) =>
+          issue.code === 'invalid_type'
+            ? { message: 'Verification hash must be a string' }
+            : { message: 'Please provide the 64-character SHA-256 verification hash' },
+      })
+      .trim()
+      .length(64, 'Verification hash must be exactly 64 hexadecimal characters'),
+  })
+  .refine(
+    (data) => Boolean(data.certificateNumber || data.passportSlug),
+    {
+      message: 'Please provide either certificateNumber or passportSlug to identify the vehicle',
+      path: ['certificateNumber'],
+    }
+  );
+
+export type VerifyCertificateInput = z.infer<typeof verifyCertificateSchema>;

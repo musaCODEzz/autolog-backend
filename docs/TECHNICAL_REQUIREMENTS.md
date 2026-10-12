@@ -81,7 +81,7 @@ AutoLog KE employs a modular, layered architecture adhering strictly to the **Cl
 | **3-Tier Service Records** | Maintenance logging, receipt proof attachment, odometer auto-advancement, backdating detection. | `POST /services`<br>`GET /services/vehicle/:id`<br>`PATCH /services/:id/receipt` | Flags any record backdated by >30 days. Auto-advances vehicle odometer. Dynamically upgrades Tier 1 (Self) to Tier 2 (Documented) upon receipt upload. |
 | **Weekly Magic Check-in** | Zero-password 72-hour mobile web odometer updates. | `POST /vehicles/:id/checkin-token`<br>`POST /vehicles/checkin/submit`<br>`POST /vehicles/checkin/dispatch-stale` | Anti-tamper signed tokens. Anti-spam idempotency (`lastCheckinPromptSentAt <= 7 days`). |
 | **Predictive Maintenance** | Kenyan road-calibrated service schedules, urgency classification. | `GET /vehicles/:id/predictions` | Calculates dynamic daily burn rate ($\Delta \text{Km} / \Delta \text{Days}$). Sorts by `OVERDUE` $\to$ `DUE_SOON` $\to$ `HEALTHY`. |
-| **Handover Certificate Engine** | Tamper-evident exportable handover passports for car sales and bank financing. | `GET /vehicles/:id/certificate`<br>`GET /vehicles/:id/certificate/print`<br>`GET /vehicles/passport/:slug/certificate`<br>`GET /vehicles/passport/:slug/certificate/print` | Deterministic SHA-256 fingerprinting based on plate, mileage, service counts, and timestamp. Serves JSON and print-ready HTML. |
+| **Handover Certificate Engine** | Tamper-evident exportable handover passports for car sales and bank financing. | `GET /vehicles/:id/certificate`<br>`GET /vehicles/:id/certificate/print`<br>`GET /vehicles/passport/:slug/certificate`<br>`GET /vehicles/passport/:slug/certificate/print`<br>`POST /vehicles/certificate/verify` | Deterministic SHA-256 fingerprinting based on plate, mileage, service counts, and timestamp. Serves JSON, print-ready HTML, and public anti-tamper authenticity evaluation. |
 | **TCO & Spend Analytics** | Total cost of ownership, cost per kilometer, category spend allocations. | `GET /vehicles/:id/analytics` | Proportional cost allocation across multi-category invoices. Prevents `$unwind` invoice double counting. |
 | **Spare-Parts RFQ Marketplace** | Blind-bidding quotation system for Kirinyaga Road dealers. | `POST /rfq`<br>`POST /rfq/:id/quotes`<br>`PATCH /rfq/quotes/:quoteId/accept` | Blind bidding feed prevents dealer price fixing. 48-hour price lock guarantee. Atomic competitor rejection upon acceptance. |
 
@@ -107,7 +107,7 @@ AutoLog KE employs a modular, layered architecture adhering strictly to the **Cl
 - **P95 Latency:** $< 120\text{ ms}$ for standard read/write endpoints.
 - **P99 Latency:** $< 250\text{ ms}$ for complex MongoDB aggregation pipelines (Analytics, Predictions).
 - **Concurrency:** Up to 500 concurrent connections per lightweight container instance without degradation.
-- **In-Memory Testing Speed:** Full test suite executes in $< 45\text{ seconds}$ across 11 test suites (84 automated tests) via in-memory replica server (`mongodb-memory-server`).
+- **In-Memory Testing Speed:** Full test suite executes in $< 45\text{ seconds}$ across 11 test suites (89 automated tests) via in-memory replica server (`mongodb-memory-server`).
 
 ### 4.3 High Availability & Resilience
 - **Database Lifecycle Management:** `src/config/db.ts` registers event listeners for `disconnected`, `reconnected`, and `error`, automatically re-establishing connections to MongoDB Atlas with exponential backoff.

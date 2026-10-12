@@ -6,6 +6,15 @@ export type FuelType = 'PETROL' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
 export type VehicleStatus = 'active' | 'sold' | 'archived';
 export type MileageUnit = 'KM' | 'MILES';
 
+export interface ICertificateIssuanceRecord {
+  certificateNumber: string;
+  verificationHash: string;
+  issuedAt: Date;
+  mileageAtIssuance: number;
+  totalServicesAtIssuance: number;
+  tier3CountAtIssuance: number;
+}
+
 export interface IVehicle {
   owner: Types.ObjectId;
   plateNumber: string;
@@ -25,6 +34,7 @@ export interface IVehicle {
   passportSlug: string;
   status: VehicleStatus;
   photos: string[];
+  latestCertificate?: ICertificateIssuanceRecord;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -137,6 +147,14 @@ const vehicleSchema = new Schema<IVehicle>(
     photos: {
       type: [String],
       default: [],
+    },
+    latestCertificate: {
+      certificateNumber: { type: String, index: true },
+      verificationHash: { type: String },
+      issuedAt: { type: Date },
+      mileageAtIssuance: { type: Number },
+      totalServicesAtIssuance: { type: Number },
+      tier3CountAtIssuance: { type: Number },
     },
   },
   {

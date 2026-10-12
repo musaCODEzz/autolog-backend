@@ -388,6 +388,7 @@ The platform includes comprehensive defense-in-depth mechanisms:
 | `GET` | `/api/v1/vehicles/:id/certificate/print` | Render print-ready HTML handover certificate (A4 / PDF export) | Private (Owner/Admin) |
 | `GET` | `/api/v1/vehicles/passport/:slug/certificate` | Public digital handover certificate with masked plate & chassis | Public (No Auth) |
 | `GET` | `/api/v1/vehicles/passport/:slug/certificate/print` | Public print-ready HTML handover certificate with masked privacy | Public (No Auth) |
+| `POST` | `/api/v1/vehicles/certificate/verify` | Public anti-tamper check (VALID_AUTHENTIC, OUTDATED_SUPERSEDED, TAMPERED_INVALID) | Public (No Auth) |
 
 ---
 
@@ -424,20 +425,20 @@ The platform includes comprehensive defense-in-depth mechanisms:
 
 ## Testing & Quality Assurance Summary
 
-The platform is fortified by **84 automated integration tests** executing against an isolated in-memory MongoDB cluster across **11 dedicated test suites**. Zero cloud databases are polluted during test runs.
+The platform is fortified by **89 automated integration tests** executing against an isolated in-memory MongoDB cluster across **11 dedicated test suites**. Zero cloud databases are polluted during test runs.
 
 ```bash
 # Execute entire test suite sequentially with zero port collisions
 npm test
 ```
 
-### Verified Test Matrix (84/84 Passing - 100% Green)
+### Verified Test Matrix (89/89 Passing - 100% Green)
 
 | Test Suite | File | Tests | Key Invariants Verified |
 | :--- | :--- | :--- | :--- |
 | **System Health** | `tests/health.test.ts` | 3 | API liveness, uptime tracker, Swagger docs endpoint. |
 | **Auth Engine** | `tests/auth.test.ts` | 10 | Kenyan phone normalization (`+254`), dual login, password hashing, commercial isolation. |
-| **Vehicle Passport**| `tests/vehicle.test.ts` | 17 | NTSA plate regex, duplicate rejection, anti-rollback, public slug passport, health badges, certificate print/JSON generation. |
+| **Vehicle Passport**| `tests/vehicle.test.ts` | 22 | NTSA plate regex, duplicate rejection, anti-rollback, public slug passport, health badges, certificate print/JSON generation, cryptographic anti-tamper verification. |
 | **Mobile Check-in** | `tests/checkin.test.ts` | 9 | 72h magic tokens, owner authorization, rollback rejection (400), dynamic burn rate recalibration. |
 | **Weekly Dispatcher** | `tests/dispatcher.test.ts` | 5 | Cron schedule, stale vehicle discovery, anti-spam idempotency guard (`lastCheckinPromptSentAt`). |
 | **Service Engine** | `tests/service.test.ts` | 7 | Tier 1/2/3 stamps, auto-odometer progression, 30-day backdating fraud detection, receipt upgrade to Tier 2. |

@@ -11,6 +11,7 @@ import {
   getPublicPassportCertificate,
   getVehicleCertificateHtml,
   getPublicPassportCertificateHtml,
+  verifyCertificate,
 } from '../controllers/vehicle.controller';
 import { protect, authorize } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -18,6 +19,7 @@ import {
   createVehicleSchema,
   updateMileageSchema,
   updateVehicleSchema,
+  verifyCertificateSchema,
 } from '../validators/vehicle.validator';
 import {
   generateVehicleCheckinToken,
@@ -119,6 +121,45 @@ router.get('/passport/:slug/certificate', getPublicPassportCertificate);
  *         description: Vehicle passport not found
  */
 router.get('/passport/:slug/certificate/print', getPublicPassportCertificateHtml);
+
+/**
+ * @openapi
+ * /api/v1/vehicles/certificate/verify:
+ *   post:
+ *     summary: Verify Cryptographic Vehicle Handover Certificate
+ *     description: Public anti-tamper authenticity check for car buyers, commercial banks, and SACCO loan officers. Evaluates SHA-256 seal against live database records to distinguish between VALID_AUTHENTIC, OUTDATED_SUPERSEDED, and TAMPERED_INVALID certificates.
+ *     tags: [Vehicles]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - verificationHash
+ *             properties:
+ *               certificateNumber:
+ *                 type: string
+ *                 example: AL-KE-2026-TOYOT-D730
+ *               passportSlug:
+ *                 type: string
+ *                 example: toyota-fielder-uodthd
+ *               verificationHash:
+ *                 type: string
+ *                 example: d730ded76940f7c58c458f5fca6713afefd1c1dec8902044510c4cd7c53e1962
+ *     responses:
+ *       200:
+ *         description: Cryptographic verification result evaluated
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: Certificate or vehicle not found
+ */
+router.post(
+  '/certificate/verify',
+  validate(verifyCertificateSchema),
+  verifyCertificate
+);
 
 // ==========================================
 // 📲 ONE-CLICK CHECK-IN (Token Governed)

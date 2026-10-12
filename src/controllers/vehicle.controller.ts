@@ -1,4 +1,4 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Vehicle } from '../models/Vehicle';
 import { ServiceRecord } from '../models/ServiceRecord';
 import { AuthRequest } from '../middlewares/auth.middleware';
@@ -426,6 +426,7 @@ export const getVehicleCertificate = async (
       .sort({ mileageAtService: -1, serviceDate: -1 });
 
     const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, false);
+    await persistLatestCertificate(vehicle, certificate);
 
     res.status(200).json({
       success: true,
@@ -462,6 +463,7 @@ export const getPublicPassportCertificate = async (
       .sort({ mileageAtService: -1, serviceDate: -1 });
 
     const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, true);
+    await persistLatestCertificate(vehicle, certificate);
 
     res.status(200).json({
       success: true,
@@ -500,6 +502,7 @@ export const getVehicleCertificateHtml = async (
       .sort({ mileageAtService: -1, serviceDate: -1 });
 
     const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, false);
+    await persistLatestCertificate(vehicle, certificate);
     const html = renderCertificateHtml(certificate);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -532,10 +535,118 @@ export const getPublicPassportCertificateHtml = async (
       .sort({ mileageAtService: -1, serviceDate: -1 });
 
     const certificate = generateVehicleCertificate(vehicle as any, serviceRecords as any, true);
+    await persistLatestCertificate(vehicle, certificate);
     const html = renderCertificateHtml(certificate);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.status(200).send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Helper: Persist latest certificate issuance snapshot on vehicle document
+ */
+const persistLatestCertificate = async (
+  vehicle: any,
+  certificate: any
+): Promise<void> => {
+  vehicle.latestCertificate = {
+    certificateNumber: certificate.certificateNumber,
+    verificationHash: certificate.verificationHash,
+    issuedAt: new Date(certificate.issuedAt),
+    mileageAtIssuance: vehicle.currentMileage,
+    totalServicesAtIssuance: certificate.trustScore.totalServices,
+    tier3CountAtIssuance: certificate.trustScore.tier3PartnerVerifiedCount,
+  };
+  await vehicle.save();
+};
+
+/**
+ * @desc    Verify Cryptographic Vehicle Handover Certificate (Public Authenticity Check)
+ * @route   POST /api/v1/vehicles/certificate/verify
+ * @access  Public
+ */
+export const verifyCertificate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { certificateNumber, passportSlug, verificationHash } = req.body;
+
+    const query: any = {};
+    if (certificateNumber) {
+      query['latestCertificate.certificateNumber'] = certificateNumber.trim();
+    } else if (passportSlug) {
+      query.passportSlug = passportSlug.trim().toLowerCase();
+    }
+
+    const vehicle = await Vehicle.findOne(query);
+
+    if (!vehicle || !vehicle.latestCertificate) {
+      res.status(404).json({
+        success: false,
+        message: 'Certificate or vehicle record not found in the AutoLog Kenya registry.',
+        data: {
+          verificationStatus: 'NOT_FOUND',
+          isAuthentic: false,
+        },
+      });
+      return;
+    }
+
+    // Check 1: Cryptographic hash match
+    if (vehicle.latestCertificate.verificationHash !== verificationHash.trim()) {
+      res.status(200).json({
+        success: true,
+        data: {
+          verificationStatus: 'TAMPERED_INVALID',
+          isAuthentic: false,
+          certificateNumber: vehicle.latestCertificate.certificateNumber,
+          message: 'Cryptographic hash mismatch. This certificate has been altered or forged.',
+        },
+      });
+      return;
+    }
+
+    // Check 2: Has vehicle mileage or service records progressed since issuance?
+    const currentServiceCount = await ServiceRecord.countDocuments({ vehicle: vehicle._id });
+    const isMileageChanged = vehicle.currentMileage !== vehicle.latestCertificate.mileageAtIssuance;
+    const isServicesChanged = currentServiceCount !== vehicle.latestCertificate.totalServicesAtIssuance;
+
+    if (isMileageChanged || isServicesChanged) {
+      res.status(200).json({
+        success: true,
+        data: {
+          verificationStatus: 'OUTDATED_SUPERSEDED',
+          isAuthentic: true,
+          certificateNumber: vehicle.latestCertificate.certificateNumber,
+          issuedAt: vehicle.latestCertificate.issuedAt,
+          issuedMileage: vehicle.latestCertificate.mileageAtIssuance,
+          currentMileage: vehicle.currentMileage,
+          issuedTotalServices: vehicle.latestCertificate.totalServicesAtIssuance,
+          currentTotalServices: currentServiceCount,
+          message: 'Certificate was cryptographically authentic when issued, but newer telemetry or maintenance has been recorded since issuance.',
+        },
+      });
+      return;
+    }
+
+    // Check 3: Perfect live match
+    res.status(200).json({
+      success: true,
+      data: {
+        verificationStatus: 'VALID_AUTHENTIC',
+        isAuthentic: true,
+        certificateNumber: vehicle.latestCertificate.certificateNumber,
+        issuedAt: vehicle.latestCertificate.issuedAt,
+        verifiedMileage: vehicle.currentMileage,
+        totalServices: currentServiceCount,
+        message: 'Certificate is authentic, verified, and reflects the current live vehicle state.',
+      },
+    });
   } catch (error) {
     next(error);
   }
