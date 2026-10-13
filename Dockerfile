@@ -45,6 +45,7 @@ RUN npm ci --omit=dev --ignore-scripts && \
 
 # Copy compiled JavaScript output from the builder stage with non-root ownership
 COPY --from=builder --chown=autolog:nodejs /app/dist ./dist
+COPY --chown=autolog:nodejs public/ ./public/
 
 # Switch to non-root user
 USER autolog

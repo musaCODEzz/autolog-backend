@@ -86,7 +86,7 @@ describe('🚀 Early Access Waitlist & Launch Landing Page Engine', () => {
     const resEarly = await request(app).get('/early-access');
     expect(resEarly.status).toBe(200);
     expect(resEarly.text).toContain('AutoLog Kenya');
-    expect(resEarly.text).toContain('Get Early Access');
+    expect(resEarly.text).toContain('Apply for Early Access');
 
     const resLanding = await request(app).get('/landing');
     expect(resLanding.status).toBe(200);
