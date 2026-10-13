@@ -1,0 +1,16 @@
+# AutoLog Kenya (AL-KE)
+> Kenya's Digital Vehicle Passport & Automotive Trust Network
+
+AutoLog Kenya is an automotive technology platform that eliminates odometer fraud, counterfeit logbooks, and blind spare parts pricing across Nairobi and Kenya.
+
+## Core Capabilities
+- **Digital Vehicle Passport:** NTSA-verified plate lookup (`KDA 123A`) with anti-rollback odometer verification and verified service timeline.
+- **3-Tier Service Records:** Tier 1 (Owner Logged), Tier 2 (Documented with Receipt/Job Card), and Tier 3 (Accredited Garage Partner Stamp).
+- **Cryptographic Handover Certificate:** Deterministic SHA-256 fingerprint verified by commercial banks, SACCOs, vehicle asset financiers, and used car buyers during vehicle resale.
+- **Kirinyaga Road Spare Parts RFQ:** Blind-bidding marketplace connecting vehicle owners directly to verified spare parts dealers with a mandatory 48-hour price lock guarantee.
+- **Weekly Magic Check-in:** 72-hour zero-password mobile link recalibrating daily driving burn rates and predicting upcoming maintenance due dates.
+
+## Early Access & Beta Testing
+- Registration URL: https://autolog.ke/early-access
+- API Endpoint: POST https://autolog.ke/api/v1/waitlist
+- Eligible Participants: Kenyan car owners, independent garage owners, spare parts importers on Kirinyaga Road, and used vehicle buyers.

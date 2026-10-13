@@ -1,0 +1,29 @@
+# AutoLog Kenya - Robots.txt
+# Checklist Item #17: Allow AI search bots to index AutoLog KE
+
+User-agent: *
+Allow: /
+Allow: /early-access
+Allow: /landing
+Allow: /api/v1/vehicles/passport/
+Disallow: /api/v1/admin/
+Disallow: /api/v1/auth/
+
+# Allow major AI Search & Retrieval crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+# Sitemap
+Sitemap: https://autolog.ke/sitemap.xml
