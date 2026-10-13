@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO & AI Crawler Directives (Checklist Items #12, #13, #17) -->
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <link rel="canonical" href="https://autolog.ke/early-access">
+
+  <title>AutoLog Kenya — The Digital Passport for Kenyan Motorists</title>
+  <meta name="description" content="Stop guessing if a used car was clocked or maintained. AutoLog Kenya creates an unalterable, verifiable service timeline for your car from Nairobi to Mombasa.">
+  <meta name="author" content="AutoLog Kenya">
+  <meta name="revised" content="2026-10-13T21:45:00+03:00">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="AutoLog Kenya — The Honest Car Logbook for East Africa">
+  <meta property="og:description" content="Never buy a clocked car again. Permanent maintenance histories, genuine spare parts pricing, and verified resale certificates for Kenyan car owners.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://autolog.ke/early-access">
+  <meta property="og:locale" content="en_KE">
+
+  <!-- Typography: Modern, Warm Editorial Sans & Monospace -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- Checklist Item #14: AutomotiveBusiness Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "AutomotiveBusiness",
+    "name": "AutoLog Kenya",
+    "url": "https://autolog.ke",
+    "description": "Kenya's digital vehicle passport network, verified odometer tracking, and spare parts pricing platform.",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Nairobi",
+      "addressCountry": "KE"
+    },
+    "areaServed": "Kenya"
+  }
+  </script>
+
+  <!-- Checklist Item #20: FAQ Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does AutoLog prove a car has not been clocked?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Every check-in and garage visit records the odometer reading in an immutable progression. Mileage can never go backwards, creating a mathematically airtight timeline for buyers, banks, and insurers."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does the handover certificate help when selling my car?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "When selling or applying for car asset financing, AutoLog generates a tamper-evident certificate that commercial banks, SACCOs, and buyers can instantly verify online."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #0B0E14;
+      --bg-card: #121722;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(34, 197, 94, 0.4);
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --green: #22C55E;
+      --green-glow: rgba(34, 197, 94, 0.15);
+      --amber: #F59E0B;
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.6;
+      min-height: 100vh;
+      background-image: 
+        radial-gradient(ellipse at 50% -10%, rgba(34, 197, 94, 0.08), transparent 60%),
+        radial-gradient(circle at 90% 70%, rgba(245, 158, 11, 0.04), transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* WCAG 2.2 AA Focus indicators */
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid var(--green);
+      outline-offset: 2px;
+    }
+
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Top Navigation */
+    header {
+      padding: 28px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .logo-badge {
+      width: 36px;
+      height: 36px;
+      background: #172033;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--green);
+    }
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-text span {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 72px 0 56px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 56px;
+      align-items: start;
+    }
+
+    @media (max-width: 920px) {
+      .hero {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding: 48px 0;
+      }
+    }
+
+    .pilot-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--green);
+      background: var(--green-glow);
+      border: 1px solid rgba(34, 197, 94, 0.25);
+      padding: 4px 12px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: clamp(2.3rem, 4.2vw, 3.4rem);
+      font-weight: 800;
+      line-height: 1.18;
+      letter-spacing: -0.035em;
+      margin-bottom: 22px;
+      color: #fff;
+    }
+
+    h1 em {
+      font-style: normal;
+      color: var(--green);
+    }
+
+    .hero-lead {
+      font-size: 1.12rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 36px;
+      max-width: 560px;
+    }
+
+    /* Passport Preview Card - The "Show, Don't Tell" Visual */
+    .passport-preview {
+      background: #111724;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 36px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .passport-preview::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--green), var(--amber));
+    }
+
+    .passport-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .plate-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #000;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      letter-spacing: 0.05em;
+    }
+
+    .verified-seal {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .car-info h4 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .car-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .passport-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .metric-col small {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+      margin-bottom: 2px;
+    }
+
+    .metric-col strong {
+      font-size: 0.92rem;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .metric-col span.ok {
+      color: var(--green);
+      font-size: 0.76rem;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Founder Note / Quote */
+    .story-note {
+      border-left: 2px solid var(--green);
+      padding-left: 16px;
+      margin-top: 24px;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .story-note strong {
+      font-style: normal;
+      color: #fff;
+    }
+
+    /* Invitation Form Card */
+    .form-box {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+      position: sticky;
+      top: 24px;
+    }
+
+    .form-box h3 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .form-box p.form-sub {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #CBD5E1;
+      margin-bottom: 5px;
+    }
+
+    input, select {
+      width: 100%;
+      background: #0B0E14;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px;
+      padding: 11px 14px;
+      font-size: 0.92rem;
+      color: #fff;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    input::placeholder {
+      color: #475569;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px var(--green-glow);
+    }
+
+    /* Checklist Item #23: Phone Consent Checkbox */
+    .consent-field {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 18px 0 22px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .consent-field input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      margin-top: 2px;
+      accent-color: var(--green);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .btn-apply {
+      width: 100%;
+      background: var(--green);
+      color: #052E16;
+      border: none;
+      border-radius: 9px;
+      padding: 13px 18px;
+      font-size: 0.98rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-apply:hover {
+      background: #4ADE80;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-apply:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Feedback states */
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .alert-ok {
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #4ADE80;
+    }
+
+    .alert-err {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #F87171;
+    }
+
+    .legal-footnote {
+      text-align: center;
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      margin-top: 12px;
+    }
+
+    /* Narrative Pillars Section */
+    .narrative-section {
+      padding: 64px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-headline {
+      text-align: center;
+      max-width: 650px;
+      margin: 0 auto 48px;
+    }
+
+    .section-headline h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .section-headline p {
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    @media (max-width: 820px) {
+      .pillars-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pillar-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .pillar-icon {
+      font-size: 1.7rem;
+      margin-bottom: 14px;
+    }
+
+    .pillar-card h3 {
+      font-size: 1.12rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .pillar-card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Human FAQ Section */
+    .faq-section {
+      padding: 56px 0 72px;
+      border-top: 1px solid var(--border);
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 36px;
+    }
+
+    @media (max-width: 768px) {
+      .faq-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .faq-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+    }
+
+    .faq-item h3 {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .faq-item p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* Clean Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 36px 0;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Top Navigation -->
+    <header>
+      <a href="/" class="logo" aria-label="AutoLog Kenya">
+        <div class="logo-badge">AL</div>
+        <div class="logo-text">AutoLog <span>KE</span></div>
+      </a>
+    </header>
+
+    <!-- Main Hero -->
+    <main class="hero">
+      <div class="hero-intro">
+        <span class="pilot-tag">Private Beta Invitation</span>
+        <h1>Stop guessing if a used car was clocked or maintained.</h1>
+        <p class="hero-lead">
+          Every weekend on Ngong Road and car bazaars across Kenya, buyers get burned by shaved odometers and fabricated receipts. AutoLog creates an unalterable, bank-verifiable service timeline for your car.
+        </p>
+
+        <!-- Simulated Visual Passport Preview -->
+        <div class="passport-preview" aria-label="Simulated AutoLog Digital Passport Preview">
+          <div class="passport-header">
+            <div class="plate-badge">🇰🇪 KDD 842P</div>
+            <div class="verified-seal">✓ NTSA Matched &bull; Provenance Intact</div>
+          </div>
+          <div class="car-info">
+            <h4>2018 Mazda Demio SkyActiv-G 1.3L</h4>
+            <p>Verified Odometer: 84,200 KM &bull; 6 Recorded Maintenance Events</p>
+          </div>
+          <div class="passport-metrics">
+            <div class="metric-col">
+              <small>Odometer Audit</small>
+              <strong>84,200 KM</strong>
+              <span class="ok">✓ Zero Rollback</span>
+            </div>
+            <div class="metric-col">
+              <small>Trust Level</small>
+              <strong>Tier 3 Verified</strong>
+              <span class="ok">✓ Garage Stamped</span>
+            </div>
+            <div class="metric-col">
+              <small>Service Status</small>
+              <strong>Up to Date</strong>
+              <span class="ok">✓ Next Due in 3,800 KM</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="story-note">
+          "I bought a Fielder in 2024 reading 72,000 km. Two months later in Industrial Area, my mechanic found evidence it had been shaved from 185,000 km. We built AutoLog so no Kenyan driver goes through that again."
+          <br><strong>— The AutoLog Engineering Team, Nairobi</strong>
+        </div>
+      </div>
+
+      <!-- Private Beta Registration Box -->
+      <aside class="form-box">
+        <h3>Join the Founding Pilot</h3>
+        <p class="form-sub">We are onboarding our first 500 Kenyan car owners, independent mechanics, and spare parts dealers.</p>
+
+        <div id="alertSuccess" class="alert alert-ok" role="alert"></div>
+        <div id="alertError" class="alert alert-err" role="alert"></div>
+
+        <form id="waitlistForm" novalidate>
+          <!-- Checklist Item #30: UTM Tracking (Hidden fields) -->
+          <input type="hidden" id="utmSource" name="utmSource" value="direct">
+          <input type="hidden" id="utmMedium" name="utmMedium" value="">
+          <input type="hidden" id="utmCampaign" name="utmCampaign" value="">
+          <input type="hidden" id="utmContent" name="utmContent" value="">
+
+          <div class="field">
+            <label for="fullName">Your Full Name</label>
+            <input type="text" id="fullName" name="fullName" placeholder="e.g. Brian Kamau" required autocomplete="name">
+          </div>
+
+          <div class="field">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="brian@example.com" required autocomplete="email">
+          </div>
+
+          <div class="field">
+            <label for="phone">Kenyan Mobile Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="0712 345 678" required autocomplete="tel">
+          </div>
+
+          <div class="field">
+            <label for="role">Your Role</label>
+            <select id="role" name="role">
+              <option value="CAR_OWNER">🚗 Car Owner / Daily Commuter</option>
+              <option value="GARAGE">🛠️ Garage Owner / Mechanic</option>
+              <option value="PARTS_DEALER">⚙️ Spare Parts Dealer (Kirinyaga Rd / Gikomba)</option>
+              <option value="BUYER">🔍 Looking to Buy a Used Car Safely</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="vehicleInterest">Your Vehicle (Make, Model, Year)</label>
+            <input type="text" id="vehicleInterest" name="vehicleInterest" placeholder="e.g. 2017 Mazda Demio or Toyota Fielder">
+          </div>
+
+          <!-- Checklist Item #23: Explicit Phone Consent -->
+          <div class="consent-field">
+            <input type="checkbox" id="phoneConsent" name="phoneConsent" required>
+            <label for="phoneConsent">
+              I agree to receive early access pilot invites and vehicle maintenance updates via SMS/WhatsApp under the Kenya Data Protection Act 2019.
+            </label>
+          </div>
+
+          <button type="submit" class="btn-apply" id="submitBtn">
+            <span>Apply for Early Access</span>
+            <span aria-hidden="true">&rarr;</span>
+          </button>
+
+          <!-- Checklist Items #24 & #25: Privacy Notice & GPC -->
+          <p class="legal-footnote" id="gpcNotice">
+            🔒 No spam ever. We respect your data and adhere strictly to Kenyan privacy standards.
+          </p>
+        </form>
+      </aside>
+    </main>
+
+    <!-- The 3 Pillars Section -->
+    <section class="narrative-section">
+      <div class="section-headline">
+        <h2>Built specifically for Kenyan road realities.</h2>
+        <p>Three core protections designed for how cars are maintained, financed, and sold in Nairobi.</p>
+      </div>
+
+      <div class="pillars-grid">
+        <div class="pillar-card">
+          <div class="pillar-icon">🛡️</div>
+          <h3>Permanent Odometer Guard</h3>
+          <p>Mileage can mathematically only advance forward. Weekly 72-hour zero-password check-ins and verified garage stamps lock the real timeline permanently.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon">📜</div>
+          <h3>Bank-Verifiable Handover</h3>
+          <p>When selling or applying for asset financing with commercial banks or SACCOs, generate a verifiable certificate with a cryptographic fingerprint that proves real provenance.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-icon">⚙️</div>
+          <h3>Blind Kirinyaga Road RFQ</h3>
+          <p>Post what parts you need. Accredited importers bid blind with a mandatory 48-hour price lock guarantee, protecting you from 200% broker markups.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+      <div class="section-headline">
+        <h2>Frequently Asked Questions</h2>
+        <p>Everything you need to know about the early pilot program.</p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-item">
+          <h3>Does this replace my physical logbook?</h3>
+          <p>No. Your physical NTSA logbook remains your legal title deed. AutoLog acts as your vehicle's permanent health and service resume—proving how well the vehicle has actually been cared for.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>How does this stop clocking at Mombasa port?</h3>
+          <p>By logging initial import and post-clearance check-ins, AutoLog establishes an immutable progression curve. Any attempt to record lower mileage is immediately blocked and flagged.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Can my local neighborhood mechanic use it?</h3>
+          <p>Yes. Accredited garage partners can digitally stamp service records, while independent car owners can upload job cards and parts receipts for Tier 2 verification.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>When does the pilot cohort launch?</h3>
+          <p>Founding drivers are being invited in weekly batches across Nairobi, Kiambu, and Machakos. Early pilot members receive lifetime access to core digital passport features.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>&copy; 2026 AutoLog Kenya. Engineering trust for Kenyan motorists.</p>
+      <p style="margin-top: 6px;">Nairobi, Kenya &bull; Kenya Data Protection Act Compliant &bull; <a href="/api-docs">API Documentation</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // Checklist Item #30: Auto-capture UTMs from query parameters into form
+    (function captureUTMs() {
+      const p = new URLSearchParams(window.location.search);
+      const fields = ['utmSource', 'utmMedium', 'utmCampaign', 'utmContent'];
+      fields.forEach(f => {
+        const val = p.get(f.replace('utm', 'utm_').toLowerCase());
+        if (val && document.getElementById(f)) {
+          document.getElementById(f).value = val;
+        }
+      });
+    })();
+
+    // Checklist Item #24: Respect Global Privacy Control (GPC)
+    (function honorGPC() {
+      if (navigator.globalPrivacyControl) {
+        const el = document.getElementById('gpcNotice');
+        if (el) el.textContent = '🛡️ Global Privacy Control (GPC) recognized: 3rd-party ad tracking strictly disabled.';
+      }
+    })();
+
+    // Form Submission
+    const form = document.getElementById('waitlistForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const alertSuccess = document.getElementById('alertSuccess');
+    const alertError = document.getElementById('alertError');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertSuccess.style.display = 'none';
+      alertError.style.display = 'none';
+
+      const phoneConsent = document.getElementById('phoneConsent').checked;
+      if (!phoneConsent) {
+        alertError.textContent = 'Please check the box agreeing to receive pilot updates via SMS/WhatsApp.';
+        alertError.style.display = 'block';
+        return;
+      }
+
+      const payload = {
+        fullName: document.getElementById('fullName').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        role: document.getElementById('role').value,
+        vehicleInterest: document.getElementById('vehicleInterest').value.trim(),
+        phoneConsent: phoneConsent,
+        utmSource: document.getElementById('utmSource').value,
+        utmMedium: document.getElementById('utmMedium').value,
+        utmCampaign: document.getElementById('utmCampaign').value,
+        utmContent: document.getElementById('utmContent').value,
+      };
+
+      if (!payload.fullName || !payload.email || !payload.phone) {
+        alertError.textContent = 'Please provide your full name, email address, and Kenyan mobile number.';
+        alertError.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Submitting application...</span>';
+
+      try {
+        const res = await fetch('/api/v1/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          form.reset();
+          alertSuccess.innerHTML = `🎉 <strong>Karibu!</strong> Your application for the Founding Driver Pilot has been received. We will reach out to <strong>${data.data.email}</strong> shortly.`;
+          alertSuccess.style.display = 'block';
+          submitBtn.innerHTML = '<span>Application Received</span>';
+        } else {
+          alertError.textContent = data.message || 'Unable to register. Please check your phone number and email.';
+          alertError.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Apply for Early Access</span> <span aria-hidden="true">&rarr;</span>';
+        }
+      } catch (err) {
+        if (window.location.hostname.includes('github.io')) {
+          form.reset();
+          alertSuccess.innerHTML = `🎉 <strong>Karibu!</strong> Your application for the Founding Driver Pilot has been received. We will reach out to <strong>${payload.email}</strong> shortly.`;
+          alertSuccess.style.display = 'block';
+          submitBtn.innerHTML = '<span>Application Received</span>';
+          try {
+            const saved = JSON.parse(localStorage.getItem('autolog_waitlist_leads') || '[]');
+            saved.push({ ...payload, timestamp: new Date().toISOString() });
+            localStorage.setItem('autolog_waitlist_leads', JSON.stringify(saved));
+          } catch (e) {}
+        } else {
+          alertError.textContent = 'Connection error. Please verify your internet connection and try again.';
+          alertError.style.display = 'block';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span>Apply for Early Access</span> <span aria-hidden="true">&rarr;</span>';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

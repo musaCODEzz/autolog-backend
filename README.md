@@ -265,6 +265,15 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 | `POST` | `/api/v1/vehicles/checkin/:token` | Submit new odometer reading, anti-rollback guard & recalculate daily burn rate | **Public (Token Governed)** |
 | `POST` | `/api/v1/vehicles/checkin/dispatch-stale` | Admin on-demand batch trigger for stale vehicle prompts (Anti-spam guarded) | Authenticated (Admin) |
 
+### Early Access Waitlist & Launch Discovery (`/early-access`, `/api/v1/waitlist`)
+| Method | Endpoint | Description | Access |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/early-access` / `/landing` | High-converting Early Access Launch landing page | **Public** |
+| `POST` | `/api/v1/waitlist` | Register for beta test (Captures UTM attribution & mandatory phone consent) | **Public** |
+| `GET` | `/api/v1/waitlist/count` | Live public waitlist counter for social proof badge | **Public** |
+| `GET` | `/robots.txt` | Crawler manifest allowing AI search bots (GPTBot, ClaudeBot, Perplexity) | **Public** |
+| `GET` | `/llms.txt` | Machine-readable markdown manifest for AI indexing & answer engines | **Public** |
+
 ---
 
 ## 🗺️ Project Milestones & Implementation Status
@@ -290,12 +299,13 @@ AutoLog KE features interactive **OpenAPI 3.0** documentation:
 - [x] **Milestone 19: Printable HTML Handover Certificate View & Export Engine** — Official AutoLog Kenya crest, serial badge, NTSA reflective plate styling, and print/PDF CSS `@media print` optimization.
 - [x] **Milestone 20: Cryptographic Certificate Verification Engine** — Anti-tamper verification endpoint for banks, lenders & buyers evaluating `VALID_AUTHENTIC`, `OUTDATED_SUPERSEDED`, `TAMPERED_INVALID`, and `NOT_FOUND`.
 - [x] **Milestone 21: Vehicle Ownership Handover & Transfer Engine** — Verified transfer to new Kenyan motorist via phone/email, atomic ownership re-assignment, archival certificate generation, and permanent immutable audit trail in `ownershipHistory`.
+- [x] **Milestone 22: Early Access Waitlist & Launch Landing Page Engine** — High-converting dark mode landing page, UTM query parameter auto-capture, explicit phone consent, `/robots.txt` AI search crawlers, `/llms.txt`, FAQ & Automotive schema, and WCAG AA accessibility.
 
 ---
 
 ## 🧪 Automated Testing Suite (Vitest + Supertest + In-Memory MongoDB)
 
-AutoLog KE features a comprehensive 93-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution, and complete offline testability.
+AutoLog KE features a comprehensive 100-test integration test suite covering every core business flow. Tests run against a dedicated in-memory MongoDB instance (`mongodb-memory-server`), ensuring zero cloud database pollution, fast execution, and complete offline testability.
 
 ```bash
 # Run full automated test suite once
@@ -305,7 +315,7 @@ npm test
 npm run test:watch
 ```
 
-### Test Coverage Summary (93/93 Tests Passing - 100% Green)
+### Test Coverage Summary (100/100 Tests Passing - 100% Green)
 | Test Suite | File | Tests | Key Scenarios Covered |
 | :--- | :--- | :--- | :--- |
 | **Health API** | `tests/health.test.ts` | 3 | Liveness, readiness, uptime, Swagger docs route |
@@ -319,6 +329,7 @@ npm run test:watch
 | **Predictive Engine**| `tests/predictions.test.ts` | 7 | Dynamic service intervals, overdue/due soon sorting, cambelt replacement threshold, burn rate estimations |
 | **Handover Certificate** | `tests/certificate.test.ts` | 5 | Deterministic SHA-256 fingerprint, serial generation (`AL-KE-YYYY-...`), privacy masking, HTML print rendering |
 | **TCO Analytics** | `tests/analytics.test.ts` | 5 | Proportional cost allocation across multi-category records, KES/km calculation, zero-spend baseline |
+| **Waitlist & Landing** | `tests/waitlist.test.ts` | 7 | Mandatory phone consent, phone normalization, UTM attribution, 409 duplicates, public count, AI robots.txt & llms.txt |
 
 ---
 
@@ -357,7 +368,7 @@ Every pull request and push to the `main` branch automatically triggers our cont
 1. **Matrix Quality Gate (Node 20.x & 22.x):**
    - Clean install (`npm ci`)
    - Static type-checking (`npx tsc --noEmit`)
-   - Automated test suite execution (`npm test` — 93 in-memory tests)
+   - Automated test suite execution (`npm test` — 100 in-memory tests)
    - Production TypeScript compilation (`npm run build`)
 2. **Docker Build Gate:**
    - Multi-stage Docker container build verification (`docker build`) to guarantee deployment artifacts never break.

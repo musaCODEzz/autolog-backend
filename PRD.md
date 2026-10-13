@@ -205,7 +205,7 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - Matrix quality gates across Node.js 20.x and 22.x on Ubuntu 24.04 LTS:
   - `npm ci`
   - `npx tsc --noEmit`
-  - `npm test` (93 tests across 11 suites)
+  - `npm test` (100 tests across 12 suites)
   - `npm run build`
   - Multi-stage Docker container build verification check.
 
@@ -234,5 +234,6 @@ Every service record on AutoLog KE is stamped with a Trust Tier:
 - [x] **Milestone 19:** Printable HTML Handover Certificate View & Export Engine (`GET /api/v1/vehicles/:id/certificate/print` and `GET /api/v1/vehicles/passport/:slug/certificate/print` featuring official AutoLog Kenya crest, serial number badge `AL-KE-YYYY-MAKE-HASH`, NTSA reflective plate badge, verified odometer integrity, 3-tier trust audit, and print/PDF CSS `@media print` optimization).
 - [x] **Milestone 20:** Cryptographic Certificate Verification Engine (`POST /api/v1/vehicles/certificate/verify` enabling car buyers, commercial banks, and SACCO loan officers to cryptographically verify handover certificates against live database records, evaluating `VALID_AUTHENTIC`, `OUTDATED_SUPERSEDED`, `TAMPERED_INVALID`, and `NOT_FOUND`).
 - [x] **Milestone 21:** Vehicle Ownership Handover & Transfer Engine (`POST /api/v1/vehicles/:id/transfer` enabling verified transfer to new Kenyan motorist via phone/email, atomic ownership re-assignment, archival certificate generation, self-transfer defense, and permanent immutable audit trail in `ownershipHistory`).
+- [x] **Milestone 22:** Early Access Waitlist & Launch Landing Page Engine (`GET /early-access`, `GET /landing`, `POST /api/v1/waitlist`, `GET /api/v1/waitlist/count`) implementing modern SaaS launch principles: UTM query string form capture, explicit phone consent, AI bot crawlers (`/robots.txt`), `/llms.txt`, FAQ & Automotive schema, and WCAG AA accessibility.
 
 

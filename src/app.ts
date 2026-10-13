@@ -5,31 +5,32 @@ import helmet from "helmet";
 import morgan from "morgan";
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
+import path from 'path';
 import authRoutes from './routes/auth.routes';
 import vehicleRoutes from './routes/vehicle.routes';
 import serviceRoutes from './routes/service.routes';
 import rfqRoutes from './routes/rfq.routes';
 import adminRoutes from './routes/admin.routes';
-
+import waitlistRoutes from './routes/waitlist.routes';
 
 const app: Express = express();
 
 app.use(helmet({
     contentSecurityPolicy: false
-
 }));
 
 app.use(
     cors({
         origin: process.env.CLIENT_URL || '*',
         credentials: true,
-
     })
 );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static assets from public/ (robots.txt, llms.txt, landing assets)
+app.use(express.static(path.join(__dirname, '../public'), { index: false }));
 
 //REQUEST LOGGER
 if (process.env.NODE_ENV === "development") {
@@ -37,6 +38,14 @@ if (process.env.NODE_ENV === "development") {
 } else {
     app.use(morgan("combined"));
 }
+
+// Early Access / Launch Landing Page routes
+app.get('/early-access', (_req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+app.get('/landing', (_req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // swagger docs
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -66,6 +75,7 @@ app.use('/api/v1/vehicles', vehicleRoutes);
 app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/rfq', rfqRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/waitlist', waitlistRoutes);
 
 //404 route handler
 app.use((_req: Request, res: Response) => {
