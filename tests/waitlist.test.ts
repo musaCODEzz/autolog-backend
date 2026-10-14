@@ -103,4 +103,14 @@ describe('🚀 Early Access Waitlist & Launch Landing Page Engine', () => {
     expect(resLlms.status).toBe(200);
     expect(resLlms.text).toContain('AutoLog Kenya (AL-KE)');
   });
+
+  it('📚 should serve static API docs (docs.html) and openapi.json', async () => {
+    const resDocs = await request(app).get('/docs.html');
+    expect(resDocs.status).toBe(200);
+    expect(resDocs.text).toContain('AutoLog Kenya — REST API Documentation');
+
+    const resSpec = await request(app).get('/openapi.json');
+    expect(resSpec.status).toBe(200);
+    expect(resSpec.body.openapi).toBe('3.0.0');
+  });
 });
