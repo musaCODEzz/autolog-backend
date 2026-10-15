@@ -63,13 +63,15 @@ describe('🔧 Service Records & 3-Tier Verification Engine', () => {
 
   describe('POST /api/v1/services', () => {
     it('should assign TIER_1_SELF when owner logs without receipt proof', async () => {
+      const recentDate = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
       const res = await request(app)
         .post('/api/v1/services')
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           vehicleId,
           serviceType: ['OIL_CHANGE'],
-          serviceDate: '2026-09-15',
+          serviceDate: recentDate,
           mileageAtService: 52000,
           costKes: 7500,
           garageName: 'Roadside Fundi Juma - Ngara',
@@ -88,13 +90,15 @@ describe('🔧 Service Records & 3-Tier Verification Engine', () => {
     });
 
     it('should assign TIER_2_DOCUMENTED when receiptUrl is attached', async () => {
+      const recentDate = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
       const res = await request(app)
         .post('/api/v1/services')
         .set('Authorization', `Bearer ${ownerToken}`)
         .send({
           vehicleId,
           serviceType: ['BRAKES'],
-          serviceDate: '2026-09-18',
+          serviceDate: recentDate,
           mileageAtService: 55000,
           costKes: 18000,
           garageName: 'AutoXpress Lavington',

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "docs:generate": "tsx src/scripts/generateDocs.ts",
-    "build": "tsx src/scripts/generateDocs.ts && tsc",
+    "build": "tsc",
     "start": "node dist/server.js",
     "seed:admin": "tsx src/scripts/seedAdmin.ts",
     "test": "vitest run --fileParallelism=false",

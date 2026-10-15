@@ -8,6 +8,11 @@ const docsHtmlPath = path.join(publicDir, 'docs.html');
 const apiDocsDir = path.join(publicDir, 'api-docs');
 const apiDocsIndexPath = path.join(apiDocsDir, 'index.html');
 
+// Ensure output directories exist
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+}
+
 // 1. Write openapi.json
 fs.writeFileSync(openapiJsonPath, JSON.stringify(swaggerSpec, null, 2), 'utf-8');
 console.log(`✓ Generated ${openapiJsonPath} (${(fs.statSync(openapiJsonPath).size / 1024).toFixed(1)} KB)`);

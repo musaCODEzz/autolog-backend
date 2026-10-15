@@ -17,8 +17,9 @@ COPY tsconfig.json ./
 # Install all dependencies (including devDependencies required for tsc compilation)
 RUN npm ci
 
-# Copy full application source code
+# Copy full application source code and public assets
 COPY src/ ./src/
+COPY public/ ./public/
 
 # Compile TypeScript to dist/
 RUN npm run build
